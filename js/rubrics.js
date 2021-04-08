@@ -13,6 +13,23 @@
 
 // TODO: CLEAN UP THIS LIST
 
+/*globals _, TEMPERAMENT, last, isCustom*/
+
+/*
+Globals location
+
+- js/utils/musicutils.js
+    isCustom, TEMPERAMENT
+
+- js/utils/utils.js
+    _, last
+*/
+
+/* exported analyzeProject, scoreToChartData, getChartOptions, runAnalytics,
+getStatsFromNotation*/
+
+/* eslint-disable no-dupe-keys */
+
 // Assign each block to a bin.
 const TACAT = {
     // deprecated blocks
@@ -410,7 +427,6 @@ const TAPAL = {
     note: "notesp",
     rhythm: "notesp",
     rhythmfactor: "notesp",
-    rhythmfactor: "notesp",
     pitch: "pitchp",
     pitchchord: "pitchp",
     transpose: "pitchp",
@@ -507,7 +523,7 @@ const PALLABELS = [
 function analyzeProject(blocks) {
     // Parse block data and generate score based on rubric
 
-    let blockList = [];
+    const blockList = [];
     for (let blk = 0; blk < blocks.blockList.length; blk++) {
         if (blocks.blockList[blk].trash) {
             continue;
@@ -515,67 +531,69 @@ function analyzeProject(blocks) {
 
         // Check to see if the block is solo or has no child flow..
         switch (blocks.blockList[blk].name) {
-        case "rhythmicdot":
-        case "tie":
-        case "drift":
-        case "osctime":
-        case "sharp":
-        case "flat":
-        case "fill":
-        case "hollowline":
-        case "start":
-            if (blocks.blockList[blk].connections[1] == null) {
-                continue;
-            }
-            break;
-        case "note":
-        case "multiplybeatfactor":
-        case "duplicatenotes":
-        case "skipnotes":
-        case "setbpm":
-        case "settransposition":
-        case "staccato":
-        case "slur":
-        case "swing":
-        case "crescendo":
-        case "setnotevolume2":
-        case "vibrato":
-        case "tremolo":
-        case "dis":
-        case "chorus":
-        case "phaser":
-        case "action":
-            if (blocks.blockList[blk].connections[2] == null) {
-                continue;
-            }
-            break;
-        case "tuplet2":
-            if (blocks.blockList[blk].connections[3] == null) {
-                continue;
-            }
-            break;
-        case "invert":
-            if (blocks.blockList[blk].connections[4] == null) {
-                continue;
-            }
-            break;
-        default:
-            if (blocks.blockList[blk].connections[0] == null &&
-                last(blocks.blockList[blk].connections) == null) {
-                continue;
-            }
-            break;
+            case "rhythmicdot":
+            case "tie":
+            case "drift":
+            case "osctime":
+            case "sharp":
+            case "flat":
+            case "fill":
+            case "hollowline":
+            case "start":
+                if (blocks.blockList[blk].connections[1] == null) {
+                    continue;
+                }
+                break;
+            case "note":
+            case "multiplybeatfactor":
+            case "duplicatenotes":
+            case "skipnotes":
+            case "setbpm":
+            case "settransposition":
+            case "staccato":
+            case "slur":
+            case "swing":
+            case "crescendo":
+            case "setnotevolume2":
+            case "vibrato":
+            case "tremolo":
+            case "dis":
+            case "chorus":
+            case "phaser":
+            case "action":
+                if (blocks.blockList[blk].connections[2] == null) {
+                    continue;
+                }
+                break;
+            case "tuplet2":
+                if (blocks.blockList[blk].connections[3] == null) {
+                    continue;
+                }
+                break;
+            case "invert":
+                if (blocks.blockList[blk].connections[4] == null) {
+                    continue;
+                }
+                break;
+            default:
+                if (
+                    blocks.blockList[blk].connections[0] == null &&
+                    last(blocks.blockList[blk].connections) == null
+                ) {
+                    continue;
+                }
+                break;
         }
         blockList.push(blocks.blockList[blk].name);
     }
 
-    scores = [];
+    const scores = [];
     for (let i = 0; i < PALS.length; i++) {
         scores.push(0);
     }
 
-    cats = [];
-    pals = [];
+    const cats = [];
+    const pals = [];
 
     for (let b = 0; b < blockList.length; b++) {
         if (blockList[b] in TACAT) {
@@ -583,6 +601,7 @@ function analyzeProject(blocks) {
                 cats.push(TACAT[blockList[b]]);
             }
         } else {
+            // eslint-disable-next-line no-console
             console.debug(blockList[b] + " not in catalog");
         }
     }
@@ -610,7 +629,7 @@ function analyzeProject(blocks) {
 }
 
 function scoreToChartData(scores) {
-    let normalizedScores = [];
+    const normalizedScores = [];
     let maxScore = 0;
     for (let i = 0; i < scores.length; i++) {
         if (scores[i] > maxScore) {
@@ -633,16 +652,18 @@ function scoreToChartData(scores) {
 
     return {
         labels: PALLABELS,
-        datasets: [{
-            label: "",
-            fillColor: "rgba(220,220,220,0.4)",
-            strokeColor: "rgba(220,220,220,1)",
-            pointColor: "rgba(220,220,220,1)",
-            pointStrokeColor: "#fff",
-            pointHighlightFill: "#fff",
-            pointHighlightStroke: "rgba(220,220,220,1)",
-            data: normalizedScores
-            }]
+        datasets: [
+            {
+                label: "",
+                fillColor: "rgba(220,220,220,0.4)",
+                strokeColor: "rgba(220,220,220,1)",
+                pointColor: "rgba(220,220,220,1)",
+                pointStrokeColor: "#fff",
+                pointHighlightFill: "#fff",
+                pointHighlightStroke: "rgba(220,220,220,1)",
+                data: normalizedScores
+            }
+        ]
     };
 }
 
@@ -708,7 +729,7 @@ function getChartOptions(callback) {
     };
 }
 
-let runAnalytics = (logo) => {
+const runAnalytics = (logo) => {
     // using lilypond output to run through code and get some stats
     logo.runningLilypond = true;
     logo.notationNotes = {};
@@ -720,48 +741,63 @@ let runAnalytics = (logo) => {
     document.body.style.cursor = "wait";
     logo.collectingStats = true;
     logo.runLogoCommands();
-}
+};
 
-let getStatsFromNotation = (logo) => {
-    projectStats = {};
-    // since we use the lilypond output to generate stats , please make sure to change these rules if 
+const getStatsFromNotation = (logo) => {
+    const projectStats = {};
+    // since we use the lilypond output to generate stats , please make sure to change these rules if
     // we ever change the lilypond notation structure.
-    let notation = logo.notation;
+    const notation = logo.notation;
     projectStats["duples"] = 0;
     projectStats["triplets"] = 0;
     projectStats["quintuplets"] = 0;
     projectStats["pitchNames"] = new Set();
     projectStats["articulation"] = {
-        begin : [],
-        end : []
+        begin: [],
+        end: []
     };
     projectStats["pitches"] = [];
     projectStats["numberOfNotes"] = 0;
 
     let noteId = 0;
 
-    for (let tur in notation.notationStaging){
-        for (let it in notation.notationStaging[tur]) {
-            let item = notation.notationStaging[tur][it];
+    for (const tur in notation.notationStaging) {
+        for (const it in notation.notationStaging[tur]) {
+            const item = notation.notationStaging[tur][it];
 
-            if (typeof item == "object" && item[0].length){
+            if (typeof item == "object" && item[0].length) {
                 for (let note of item[0]) {
-                    projectStats["pitchNames"].add(note[0]);
-                    let freq = logo.synth._getFrequency(note);
-                    projectStats["pitches"].push(freq);
-                    if (projectStats["lowestNote"] == undefined ||
-                        freq < projectStats["lowestNote"][2]) {
-                        projectStats["lowestNote"] = [note,noteId,freq];
+                    let freq;
+                    if (isCustom(logo.synth.inTemperament)) {
+                        freq = logo.synth.getCustomFrequency(note, logo.synth.inTemperament);
+                        const test = TEMPERAMENT[logo.synth.inTemperament].filter(
+                            (ele) => ele[3] === note.slice(0, note.length - 1)
+                        );
+                        if (test.length > 0) {
+                            note = test[0][1] + note[note.length - 1];
+                        }
+                    } else {
+                        freq = logo.synth._getFrequency(note);
                     }
-                    if (projectStats["highestNote"] == undefined ||
-                        freq > projectStats["highestNote"][2]) {
-                        projectStats["highestNote"] = [note,noteId,freq];
+                    projectStats["pitchNames"].add(note.slice(0, note.length - 1));
+                    projectStats["pitches"].push(freq);
+                    if (
+                        projectStats["lowestNote"] == undefined ||
+                        freq < projectStats["lowestNote"][2]
+                    ) {
+                        projectStats["lowestNote"] = [note, noteId, freq];
+                    }
+                    if (
+                        projectStats["highestNote"] == undefined ||
+                        freq > projectStats["highestNote"][2]
+                    ) {
+                        projectStats["highestNote"] = [note, noteId, freq];
                     }
                     projectStats["numberOfNotes"]++;
                     noteId++;
                 }
             }
-            
+
             if (item[1] == 2) {
                 projectStats["duples"]++;
             } else if (item[1] == 3) {
@@ -780,26 +816,28 @@ let getStatsFromNotation = (logo) => {
         }
     }
 
-    blockList = logo.blocks.blockList;
+    const blockList = logo.blocks.blockList;
     projectStats["rests"] = 0;
     projectStats["ornaments"] = 0;
-    for (let b  of blockList) {
+    for (const b of blockList) {
         if (b.trash) {
             continue;
         }
-        switch(b.name){
-        case "rest2" :
-            projectStats["rests"]++;
-        case "":
-        default :
+        switch (b.name) {
+            case "rest2":
+                projectStats["rests"]++;
+                break;
+            case "":
+            default:
         }
 
-        switch(b.protoblock.palette.name){
-        case("ornaments"):
-            projectStats["ornaments"]++;
-        default:
+        switch (b.protoblock.palette.name) {
+            case "ornaments":
+                projectStats["ornaments"]++;
+                break;
+            default:
         }
     }
-    console.debug(projectStats);
-    return projectStats
-}
+    // console.debug(projectStats);
+    return projectStats;
+};

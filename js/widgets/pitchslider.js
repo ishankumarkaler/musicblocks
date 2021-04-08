@@ -13,28 +13,46 @@
 // from given frequency to nextoctave frequency(two times the given frequency)
 // in continuous manner.
 
+/* global _, Tone, logo */
+
+/*
+   Global locations
+    js/activity.js
+        logo, Tone
+    js/utils/utils.js
+        _
+*/
+
+/* exported PitchSlider */
 class PitchSlider {
     static ICONSIZE = 32;
     static SEMITONE = Math.pow(2, 1 / 12);
 
+    /**
+     * @constructor
+     */
     constructor() {
         this._delta = 0;
         this.sliders = {};
         this._cellScale = 0;
     }
 
+    /**
+     * Intializes the pitch/slider
+     * @returns {void}
+     */
     init() {
         if (window.widgetWindows.openWindows["slider"]) return;
         if (!this.frequencies || !this.frequencies.length) this.frequencies = [392];
 
         const oscillators = [];
-        for (const _ in this.frequencies) {
+        for (let i = 0; i < this.frequencies.length; i++) {
             const osc = new Tone.AMSynth().toDestination();
             oscillators.push(osc);
         }
 
         this._cellScale = 1.0;
-        this.widgetWindow = window.widgetWindows.windowFor(this, "pitch slider", "slider");
+        this.widgetWindow = window.widgetWindows.windowFor(this, "pitch slider", "slider", false);
         this.widgetWindow.onclose = () => {
             for (const osc of oscillators) osc.triggerRelease();
             this.widgetWindow.destroy();
@@ -120,6 +138,11 @@ class PitchSlider {
         setTimeout(this.widgetWindow.sendToCenter, 0);
     }
 
+    /**
+     * @private
+     * @param {number} frequency
+     * @returns {void}
+     */
     _save(frequency) {
         for (const name in logo.blocks.palettes.dict) {
             logo.blocks.palettes.dict[name].hideMenu(true);

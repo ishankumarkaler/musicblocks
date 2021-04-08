@@ -10,6 +10,59 @@
 // Foundation, 51 Franklin Street, Suite 500 Boston, MA 02110-1335 USA
 //
 
+/*
+   global last, _, getNoiseSynthName, getVoiceSynthName, getDrumSynthName, updateTemperaments,
+   TEMPERAMENT, getTextWidth, getModeNumbers, WESTERN2EISOLFEGENAMES, splitSolfege, i18nSolfege,
+   docById, piemenuNumber, piemenuColor, piemenuNoteValue, piemenuBasic, platformColor,
+   beginnerMode, piemenuBoolean, blockBlocks, DEFAULTTEMPERAMENT, NOISENAMES, DEFAULTNOISE, VOICENAMES,
+   OSCTYPES, DEFAULTOSCILLATORTYPE, FILTERTYPES, topBlock, DISABLEDFILLCOLOR, DEFAULTFILTERTYPE, DRUMNAMES,
+   _THIS_IS_MUSIC_BLOCKS_, TEMPERAMENTS, piemenuVoices, DEFAULTVOICE, EFFECTSNAMES, DEFAULTEFFECT,
+   DEFAULTDRUM, INVERTMODES, DEFAULTINVERT, piemenuIntervals, DEFAULTINTERVAL, createjs, EXPANDBUTTON,
+   COLLAPSEBUTTON, ProtoBlock, getNoiseName, getDrumName, splitScaleDegree, DEFAULTACCIDENTAL, DEFAULTMODE, NUMBERBLOCKDEFAULT,
+   PALETTESTROKECOLORS, PALETTEFILLCOLORS, DISABLEDSTROKECOLOR, safeSVG, ACCIDENTALLABELS, ACCIDENTALNAMES,
+   piemenuAccidentals, piemenuModes, SOLFATTRS, piemenuPitches, SOLFNOTES, EASTINDIANSOLFNOTES,
+   piemenuCustomNotes, PreDefinedTemperaments, trashcan, scrollBlockContainer, piemenuBlockContext,
+   COLLAPSETEXTY, STANDARDBLOCKHEIGHT, COLLAPSETEXTX, MEDIASAFEAREA, VALUETEXTX, TEXTY, DEGREES, NATURAL,
+   DOUBLEFLAT, DOUBLESHARP, FLAT, SHARP, RSYMBOLS, NSYMBOLS, delayExecution, TEXTX, HIGHLIGHTSTROKECOLORS,
+   PALETTEHIGHLIGHTCOLORS, hideDOMLabel, SCALENOTES
+ */
+
+/*
+   Global locations
+   - js/utils/utils.js
+        _, getTextWidth, docById, safeSVG, delayExecution, hideDOMLabel
+   - js/utils/musicutils.js
+        getNoiseSynthName, getVoiceSynthName, getDrumSynthName, updateTemperaments, TEMPERAMENT,
+        getModeNumbers, WESTERN2EISOLFEGENAMES, splitSolfege, i18nSolfege, DEFAULTTEMPERAMENT,
+        DEFAULTNOISE, OSCTYPES, DEFAULTOSCILLATORTYPE, FILTERTYPES, DEFAULTFILTERTYPE, TEMPERAMENTS,
+        DEFAULTVOICE, DEFAULTEFFECT, DEFAULTDRUM, INVERTMODES, DEFAULTINVERT, DEFAULTINTERVAL,
+        getNoiseName, getDrumName, splitScaleDegree, DEFAULTACCIDENTAL, DEFAULTMODE, SOLFNOTES
+        ACCIDENTALLABELS, ACCIDENTALNAMES, SOLFATTRS, EASTINDIANSOLFNOTES, PreDefinedTemperaments,
+        DEGREES, NATURAL, DOUBLEFLAT, DOUBLESHARP, FLAT, SHARP, RSYMBOLS, NSYMBOLS, SCALENOTES
+   - js/utils/synthutils.js
+        NOISENAMES, VOICENAMES, DRUMNAMES, EFFECTSNAMES
+   - js/turtledefs.js
+        NUMBERBLOCKDEFAULT
+   - js/artwork.js
+        EXPANDBUTTON, COLLAPSEBUTTON, PALETTESTROKECOLORS, PALETTEFILLCOLORS, COLLAPSETEXTY,
+        STANDARDBLOCKHEIGHT, COLLAPSETEXTX, MEDIASAFEAREA, VALUETEXTX, TEXTY, TEXTX, HIGHLIGHTSTROKECOLORS,
+        PALETTEHIGHLIGHTCOLORS
+   - js/protoblocks.js
+        ProtoBlock 
+   - js/js-export/export.js
+   - js/logo.js
+   - js/piemenus.js
+        piemenuNumber, piemenuColor, piemenuNoteValue, piemenuBasic, piemenuBoolean, piemenuVoices,
+        piemenuIntervals, piemenuAccidentals, piemenuModes, piemenuPitches, piemenuCustomNotes,
+        piemenuBlockContext
+   - js/activity.js
+        _THIS_IS_MUSIC_BLOCKS_, beginnerMode, _THIS_IS_MUSIC_BLOCKS_, trashcan, scrollBlockContainer
+   - js/utils/platformstyle.js
+        platformColor
+ */
+
+/* exported Block, $*/
+
 // Length of a long touch
 const TEXTWIDTH = 240; // 90
 const STRINGLEN = 9;
@@ -56,7 +109,8 @@ const SPECIALINPUTS = [
     "noisename",
     "customNote",
     "grid",
-    "outputtools"
+    "outputtools",
+    "wrapmode"
 ];
 const WIDENAMES = [
     "intervalname",
@@ -90,14 +144,28 @@ const PIEMENUS = [
     "noisename",
     "customNote",
     "grid",
-    "outputtools"
+    "outputtools",
+    "wrapmode"
 ];
+
+function _blockMakeBitmap(data, callback, args) {
+    // Async creation of bitmap from SVG data.
+    // Works with Chrome, Safari, Firefox (untested on IE).
+    const img = new Image();
+
+    img.onload = function () {
+        const bitmap = new createjs.Bitmap(img);
+        callback(bitmap, args);
+    };
+
+    img.src = "data:image/svg+xml;base64," + window.btoa(unescape(encodeURIComponent(data)));
+}
 
 // Define block instance objects and any methods that are intra-block.
 class Block {
     constructor(protoblock, blocks, overrideName) {
         if (protoblock === null) {
-            console.debug("null protoblock sent to Block");
+            // console.debug("null protoblock sent to Block");
             return;
         }
 
@@ -174,7 +242,7 @@ class Block {
     // Internal function for creating cache.
     // Includes workaround for a race condition.
     _createCache(callback, args) {
-        let that = this;
+        const that = this;
         return new Promise((resolve, reject) => {
             let loopCount = 0;
 
@@ -213,8 +281,8 @@ class Block {
 
     // Internal function for updating the cache.
     // Includes workaround for a race condition.
-    updateCache(counter) {
-        let that = this;
+    updateCache() {
+        const that = this;
         return new Promise((resolve, reject) => {
             let loopCount = 0;
 
@@ -428,7 +496,7 @@ class Block {
         }
 
         if (this.bitmap === null) {
-            console.debug("bitmap not ready");
+            // console.debug("bitmap not ready");
             return;
         }
 
@@ -577,7 +645,6 @@ class Block {
         }
 
         if (this.container !== null) {
-            let that = this;
 
             /**
              * After new buttons are creates, they are cached and a new hit are is calculated.
@@ -585,18 +652,21 @@ class Block {
              * @param that - = this = container
              * @returns {void}
              */
-            let _postProcess = function (that) {
-                that.collapseButtonBitmap.scaleX = that.collapseButtonBitmap.scaleY = that.collapseButtonBitmap.scale =
-                    scale / 3;
-                that.expandButtonBitmap.scaleX = that.expandButtonBitmap.scaleY = that.expandButtonBitmap.scale =
-                    scale / 3;
+            const _postProcess = function (that) {
+                that.collapseButtonBitmap.scaleX
+                = that.collapseButtonBitmap.scaleY
+                = that.collapseButtonBitmap.scale
+                = scale / 3;
+                that.expandButtonBitmap.scaleX
+                = that.expandButtonBitmap.scaleY
+                = that.expandButtonBitmap.scale = scale / 3;
                 that.updateCache();
                 that._calculateBlockHitArea();
             };
 
             if (this.isCollapsible()) {
                 this._generateCollapseArtwork(_postProcess);
-                let fontSize = 10 * scale;
+                const fontSize = 10 * scale;
                 this.collapseText.font = fontSize + "px Sans";
                 this._positionCollapseLabel(scale);
             }
@@ -721,7 +791,7 @@ class Block {
      * @returns {void}
      */
     imageLoad() {
-        let fontSize = 10 * this.protoblock.scale;
+        const fontSize = 10 * this.protoblock.scale;
         this.text = new createjs.Text("", fontSize + "px Sans", platformColor.blockText);
         this.generateArtwork(true, []);
     }
@@ -732,8 +802,8 @@ class Block {
      * @returns {void}
      */
     _addImage() {
-        let image = new Image();
-        let that = this;
+        const image = new Image();
+        const that = this;
 
         /**
          * The loader.
@@ -741,7 +811,7 @@ class Block {
          * @returns {void}
          */
         image.onload = function () {
-            let bitmap = new createjs.Bitmap(image);
+            const bitmap = new createjs.Bitmap(image);
             // Don't override the image on a media block.
             if (that.name === "media") {
                 for (let i = 0; i < that.container.children.length; i++) {
@@ -812,12 +882,12 @@ class Block {
      */
     generateArtwork(firstTime) {
         // Get the block labels from the protoblock.
-        let that = this;
-        let thisBlock = this.blocks.blockList.indexOf(this);
+        const that = this;
+        const thisBlock = this.blocks.blockList.indexOf(this);
         let block_label = "";
 
         // Create the highlight bitmap for the block.
-        let __processHighlightBitmap = function (bitmap, that) {
+        const __processHighlightBitmap = function (bitmap, that) {
             if (that.highlightBitmap != null) {
                 that.container.removeChild(that.highlightBitmap);
             }
@@ -841,12 +911,12 @@ class Block {
 
             const __callback = function (that, firstTime) {
                 that.blocks.refreshCanvas();
-                let thisBlock = that.blocks.blockList.indexOf(that);
+                const thisBlock = that.blocks.blockList.indexOf(that);
 
                 if (firstTime) {
                     that._loadEventHandlers();
                     if (that.image !== null) {
-                        console.log(that.name);
+                        // console.debug(that.name);
                         that._addImage();
                     }
 
@@ -879,7 +949,7 @@ class Block {
         };
 
         // Create the disconnect highlight bitmap for the block.
-        let __processDisconnectedHighlightBitmap = function (bitmap, that) {
+        const __processDisconnectedHighlightBitmap = function (bitmap, that) {
             if (that.disconnectedHighlightBitmap != null) {
                 that.container.removeChild(that.disconnectedHighlightBitmap);
             }
@@ -915,7 +985,7 @@ class Block {
         };
 
         // Create the disconnect bitmap for the block.
-        let __processDisconnectedBitmap = function (bitmap, that) {
+        const __processDisconnectedBitmap = function (bitmap, that) {
             if (that.disconnectedBitmap != null) {
                 that.container.removeChild(that.disconnectedBitmap);
             }
@@ -954,7 +1024,7 @@ class Block {
         };
 
         // Create the bitmap for the block.
-        let __processBitmap = function (bitmap, that) {
+        const __processBitmap = function (bitmap, that) {
             if (that.bitmap != null) {
                 that.container.removeChild(that.bitmap);
             }
@@ -1017,7 +1087,7 @@ class Block {
             // Create artwork and dock.
             this.protoblock.scale = this.blocks.blockScale;
 
-            let obj = this.protoblock.generator();
+            const obj = this.protoblock.generator();
             this.artwork = obj[0];
             for (let i = 0; i < obj[1].length; i++) {
                 this.docks.push([obj[1][i][0], obj[1][i][1], this.protoblock.dockTypes[i]]);
@@ -1055,7 +1125,7 @@ class Block {
      * @returns {void}
      */
     _finishImageLoad() {
-        let thisBlock = this.blocks.blockList.indexOf(this);
+        // const thisBlock = this.blocks.blockList.indexOf(this);
         let proto, obj, label, attr;
         // Value blocks get a modifiable text label.
         if (SPECIALINPUTS.indexOf(this.name) !== -1) {
@@ -1072,9 +1142,8 @@ class Block {
                         this.value = "5";
                         break;
                     case "customNote":
-                        let len = this.blocks.logo.synth.startingPitch.length;
-                        this.value =
-                            this.blocks.logo.synth.startingPitch.substring(0, len - 1) + "(+0)";
+                        this.value = this.blocks.logo.synth.startingPitch
+                            .substring(0, this.blocks.logo.synth.startingPitch.length - 1) + "(+0)";
                         break;
                     case "notename":
                         this.value = "G";
@@ -1124,6 +1193,8 @@ class Block {
                     case "grid":
                         this.value = "Cartesian";
                         break;
+                    case "wrapmode":
+                        this.value = "on";
                 }
             }
 
@@ -1212,7 +1283,7 @@ class Block {
             obj = proto.generator();
             this.collapseArtwork = obj[0];
 
-            let postProcess = function (that) {
+            const postProcess = function (that) {
                 that.loadComplete = true;
 
                 if (that.postProcess !== null) {
@@ -1236,15 +1307,14 @@ class Block {
      * @returns {void}
      */
     _generateCollapseArtwork(postProcess) {
-        let that = this;
-        let thisBlock = this.blocks.blockList.indexOf(this);
+        const thisBlock = this.blocks.blockList.indexOf(this);
 
         /**
          * Run the postprocess function after the artwork is loaded.
          * @private
          * @returns {void}
          */
-        let __finishCollapse = function (that) {
+        const __finishCollapse = function (that) {
             if (postProcess !== null) {
                 postProcess(that);
             }
@@ -1264,12 +1334,14 @@ class Block {
          * @param that - = this
          * @returns {void}
          */
-        let __processCollapseButton = function (that) {
-            let image = new Image();
+        const __processCollapseButton = function (that) {
+            const image = new Image();
             image.onload = function () {
                 that.collapseButtonBitmap = new createjs.Bitmap(image);
-                that.collapseButtonBitmap.scaleX = that.collapseButtonBitmap.scaleY = that.collapseButtonBitmap.scale =
-                    that.protoblock.scale / 3;
+                that.collapseButtonBitmap.scaleX
+                = that.collapseButtonBitmap.scaleY
+                = that.collapseButtonBitmap.scale
+                = that.protoblock.scale / 3;
                 that.container.addChild(that.collapseButtonBitmap);
                 that.collapseButtonBitmap.x = 2 * that.protoblock.scale;
                 if (that.isInlineCollapsible()) {
@@ -1294,12 +1366,14 @@ class Block {
          * @param that - = this
          * @returns {void}
          */
-        let __processExpandButton = function (that) {
-            let image = new Image();
+        const __processExpandButton = function (that) {
+            const image = new Image();
             image.onload = function () {
                 that.expandButtonBitmap = new createjs.Bitmap(image);
-                that.expandButtonBitmap.scaleX = that.expandButtonBitmap.scaleY = that.expandButtonBitmap.scale =
-                    that.protoblock.scale / 3;
+                that.expandButtonBitmap.scaleX
+                = that.expandButtonBitmap.scaleY
+                = that.expandButtonBitmap.scale
+                = that.protoblock.scale / 3;
 
                 that.container.addChild(that.expandButtonBitmap);
                 that.expandButtonBitmap.visible = that.collapsed;
@@ -1326,14 +1400,14 @@ class Block {
          * @param that - = this
          * @returns {void}
          */
-        let __processHighlightCollapseBitmap = function (bitmap, that) {
+        const __processHighlightCollapseBitmap = function (bitmap, that) {
             that.highlightCollapseBlockBitmap = bitmap;
             that.highlightCollapseBlockBitmap.name = "highlight_collapse_" + thisBlock;
             that.container.addChild(that.highlightCollapseBlockBitmap);
             that.highlightCollapseBlockBitmap.visible = false;
 
             if (that.collapseText === null) {
-                let fontSize = 10 * that.protoblock.scale;
+                const fontSize = 10 * that.protoblock.scale;
                 switch (that.name) {
                     case "action":
                         that.collapseText = new createjs.Text(
@@ -1494,14 +1568,14 @@ class Block {
          * @param that - = this
          * @returns {void}
          */
-        let __processCollapseBitmap = function (bitmap, that) {
+        const __processCollapseBitmap = function (bitmap, that) {
             that.collapseBlockBitmap = bitmap;
             that.collapseBlockBitmap.name = "collapse_" + thisBlock;
             that.container.addChild(that.collapseBlockBitmap);
             that.collapseBlockBitmap.visible = that.collapsed;
             that.blocks.refreshCanvas();
 
-            let artwork = that.collapseArtwork;
+            const artwork = that.collapseArtwork;
             _blockMakeBitmap(
                 artwork
                     .replace(/fill_color/g, PALETTEHIGHLIGHTCOLORS[that.protoblock.palette.name])
@@ -1512,7 +1586,7 @@ class Block {
             );
         };
 
-        let artwork = this.collapseArtwork
+        const artwork = this.collapseArtwork
             .replace(/fill_color/g, PALETTEFILLCOLORS[this.protoblock.palette.name])
             .replace(/stroke_color/g, PALETTESTROKECOLORS[this.protoblock.palette.name])
             .replace("block_label", "");
@@ -1702,7 +1776,7 @@ class Block {
 
     getBlockId() {
         // Generate a UID based on the block index into the blockList.
-        let number = blockBlocks.blockList.indexOf(this);
+        const number = blockBlocks.blockList.indexOf(this);
         return "_" + number.toString();
     }
 
@@ -1717,27 +1791,27 @@ class Block {
 
     loadThumbnail(imagePath) {
         // Load an image thumbnail onto block.
-        let thisBlock = this.blocks.blockList.indexOf(this);
-        let that = this;
+        const thisBlock = this.blocks.blockList.indexOf(this);
+        const that = this;
 
         if (this.blocks.blockList[thisBlock].value === null && imagePath === null) {
             return;
         }
-        let image = new Image();
+        const image = new Image();
 
         image.onload = function () {
             // Before adding new artwork, remove any old artwork.
             that.removeChildBitmap("media");
 
-            let bitmap = new createjs.Bitmap(image);
+            const bitmap = new createjs.Bitmap(image);
             bitmap.name = "media";
 
-            let myContainer = new createjs.Container();
+            const myContainer = new createjs.Container();
             myContainer.addChild(bitmap);
 
             // Resize the image to a reasonable maximum.
-            let MAXWIDTH = 600;
-            let MAXHEIGHT = 450;
+            const MAXWIDTH = 600;
+            const MAXHEIGHT = 450;
             if (image.width > image.height) {
                 if (image.width > MAXWIDTH) {
                     bitmap.scaleX = bitmap.scaleY = bitmap.scale = MAXWIDTH / image.width;
@@ -1748,7 +1822,7 @@ class Block {
                 }
             }
 
-            let bounds = myContainer.getBounds();
+            const bounds = myContainer.getBounds();
             myContainer.cache(bounds.x, bounds.y, bounds.width, bounds.height);
             that.value = myContainer.bitmapCache.getCacheDataURL();
             that.imageBitmap = bitmap;
@@ -1772,13 +1846,13 @@ class Block {
     }
 
     _doOpenMedia(thisBlock) {
-        let fileChooser = docById("myOpenAll");
-        let that = this;
+        const fileChooser = docById("myOpenAll");
+        const that = this;
 
-        let __readerAction = function (event) {
+        const __readerAction = function () {
             window.scroll(0, 0);
 
-            let reader = new FileReader();
+            const reader = new FileReader();
             reader.onloadend = function () {
                 if (reader.result) {
                     if (that.name === "media") {
@@ -1791,6 +1865,8 @@ class Block {
                 }
             };
             if (that.name === "media") {
+                reader.readAsDataURL(fileChooser.files[0]);
+            } else if (that.name === "audiofile") {
                 reader.readAsDataURL(fileChooser.files[0]);
             } else {
                 reader.readAsText(fileChooser.files[0]);
@@ -1819,8 +1895,7 @@ class Block {
             this.show();
         } else {
             // if we are inside of a collapsed note block, do nothing.
-            if (this.blocks.blockList[nblk].collapsed) {
-            } else {
+            if (!this.blocks.blockList[nblk].collapsed) {
                 this.inCollapsed = false;
                 this.show();
             }
@@ -1830,16 +1905,16 @@ class Block {
     collapseToggle() {
         // Find the blocks to collapse/expand inside of a collapable
         // block.
-        let thisBlock = this.blocks.blockList.indexOf(this);
+        const thisBlock = this.blocks.blockList.indexOf(this);
         this.blocks.findDragGroup(thisBlock);
 
         if (this.collapseBlockBitmap === null) {
-            console.debug("collapse bitmap not ready");
+            // console.debug("collapse bitmap not ready");
             return;
         }
 
         // Remember the current state.
-        let isCollapsed = this.collapsed;
+        const isCollapsed = this.collapsed;
         // Toggle the state.
         this.collapsed = !isCollapsed;
 
@@ -1864,7 +1939,7 @@ class Block {
                     this._oscTimeLabel();
                     break;
                 default:
-                    console.debug("What do we do with a collapsed " + this.name + " block?");
+                    // console.debug("What do we do with a collapsed " + this.name + " block?");
                     break;
             }
         }
@@ -1905,7 +1980,7 @@ class Block {
             // Set collapsed state of all of the blocks in the drag group.
             if (this.blocks.dragGroup.length > 0) {
                 for (let b = 1; b < this.blocks.dragGroup.length; b++) {
-                    let blk = this.blocks.dragGroup[b];
+                    const blk = this.blocks.dragGroup[b];
                     if (this.collapsed) {
                         // if (this.blocks.blockList[blk].inCollapsed) {
                         this.blocks.blockList[blk].setCollapsedState();
@@ -1926,21 +2001,21 @@ class Block {
     _intervalLabel() {
         // Find pitch and value to display on the collapsed interval
         // block.
-        let degrees = DEGREES.split(" ");
-        let intervalLabels = {};
+        const degrees = DEGREES.split(" ");
+        const intervalLabels = {};
         for (let i = 0; i < degrees.length; i++) {
             intervalLabels[i] = degrees[i];
         }
 
-        let intervals = [];
+        const intervals = [];
         let i = 0;
 
         let c = this.blocks.blockList.indexOf(this),
             lastIntervalBlock;
         while (c !== null) {
             lastIntervalBlock = c;
-            let n = this.blocks.blockList[c].connections[1];
-            let cblock = this.blocks.blockList[n];
+            const n = this.blocks.blockList[c].connections[1];
+            const cblock = this.blocks.blockList[n];
             if (cblock.name === "number") {
                 if (Math.abs(cblock.value) in intervalLabels) {
                     if (cblock.value < 0) {
@@ -1961,7 +2036,7 @@ class Block {
 
             i += 1;
             if (i > 5) {
-                console.debug("loop?");
+                // console.debug("loop?");
                 break;
             }
 
@@ -1974,7 +2049,7 @@ class Block {
         }
 
         let v = "";
-        let nblk = this.blocks.findNoteBlock(lastIntervalBlock);
+        const nblk = this.blocks.findNoteBlock(lastIntervalBlock);
         if (nblk === null) {
             this.collapseText.text = _("scalar interval") + itext;
         } else {
@@ -1982,8 +2057,8 @@ class Block {
             if (c !== null) {
                 // Only look for standard form: / 1 4
                 if (this.blocks.blockList[c].name === "divide") {
-                    let c1 = this.blocks.blockList[c].connections[1];
-                    let c2 = this.blocks.blockList[c].connections[2];
+                    const c1 = this.blocks.blockList[c].connections[1];
+                    const c2 = this.blocks.blockList[c].connections[2];
                     if (
                         this.blocks.blockList[c1].name === "number" &&
                         this.blocks.blockList[c2].name === "number"
@@ -1999,7 +2074,7 @@ class Block {
             }
 
             c = this.blocks.findFirstPitchBlock(this.blocks.blockList[nblk].connections[2]);
-            let p = this._getPitch(c);
+            const p = this._getPitch(c);
             if (c === null || p === "") {
                 this.collapseText.text = _("scalar interval") + itext;
             } else {
@@ -2024,8 +2099,8 @@ class Block {
         if (c !== null) {
             // Only look for standard form: / 1 4
             if (this.blocks.blockList[c].name === "divide") {
-                let c1 = this.blocks.blockList[c].connections[1];
-                let c2 = this.blocks.blockList[c].connections[2];
+                const c1 = this.blocks.blockList[c].connections[1];
+                const c2 = this.blocks.blockList[c].connections[2];
                 if (
                     this.blocks.blockList[c1].name === "number" &&
                     this.blocks.blockList[c2].name === "number"
@@ -2043,7 +2118,7 @@ class Block {
 
         c = this.connections[2];
         c = this.blocks.findFirstPitchBlock(c);
-        let p = this._getPitch(c);
+        const p = this._getPitch(c);
         if (c === null) {
             if (_THIS_IS_MUSIC_BLOCKS_) {
                 if (vi !== null) {
@@ -2083,11 +2158,11 @@ class Block {
         if (c !== null) {
             // Only look for standard form: / 1000 / 3 2
             if (this.blocks.blockList[c].name === "divide") {
-                let c1 = this.blocks.blockList[c].connections[1];
-                let c2 = this.blocks.blockList[c].connections[2];
+                const c1 = this.blocks.blockList[c].connections[1];
+                const c2 = this.blocks.blockList[c].connections[2];
                 if (c1 !== null && c2 !== null && this.blocks.blockList[c2].name === "divide") {
-                    let ci = this.blocks.blockList[c2].connections[1];
-                    let cii = this.blocks.blockList[c2].connections[2];
+                    const ci = this.blocks.blockList[c2].connections[1];
+                    const cii = this.blocks.blockList[c2].connections[2];
                     if (
                         ci !== null &&
                         cii !== null &&
@@ -2104,7 +2179,7 @@ class Block {
 
         c = this.connections[2];
         c = this.blocks.findFirstPitchBlock(c);
-        let p = this._getPitch(c);
+        const p = this._getPitch(c);
         if (c === null) {
             this.collapseText.text = _("silence") + " | " + v;
         } else if (p === "" && v === "") {
@@ -2137,13 +2212,13 @@ class Block {
                 c2 = this.blocks.blockList[c].connections[2];
                 if (this.blocks.blockList[c2].name === "number") {
                     if (this.blocks.blockList[c1].name === "solfege") {
-                        let solfnotes_ = _("ti la sol fa mi re do").split(" ");
-                        let stripped = this.blocks.blockList[c1].value
+                        const solfnotes_ = _("ti la sol fa mi re do").split(" ");
+                        const stripped = this.blocks.blockList[c1].value
                             .replace(SHARP, "")
                             .replace(FLAT, "")
                             .replace(DOUBLESHARP, "")
                             .replace(DOUBLEFLAT, "");
-                        let i = ["ti", "la", "sol", "fa", "mi", "re", "do"].indexOf(stripped);
+                        const i = ["ti", "la", "sol", "fa", "mi", "re", "do"].indexOf(stripped);
                         if (this.blocks.blockList[c1].value.indexOf(SHARP) !== -1) {
                             return solfnotes_[i] + SHARP + " " + this.blocks.blockList[c2].value;
                         } else if (this.blocks.blockList[c1].value.indexOf(FLAT) !== -1) {
@@ -2178,8 +2253,8 @@ class Block {
                 c2 = this.blocks.blockList[c].connections[2];
                 if (this.blocks.blockList[c2].name === "number") {
                     if (this.blocks.blockList[c1].name === "number") {
-                        let degrees = DEGREES.split(" ");
-                        let i = this.blocks.blockList[c1].value - 1;
+                        const degrees = DEGREES.split(" ");
+                        const i = this.blocks.blockList[c1].value - 1;
                         if (i > 0 && i < degrees.length) {
                             return degrees[i] + " " + this.blocks.blockList[c2].value;
                         } else {
@@ -2232,7 +2307,7 @@ class Block {
         if (this.connections[1] !== null) {
             this.blocks.findDragGroup(this.connections[1]);
             for (let b = 0; b < this.blocks.dragGroup.length; b++) {
-                let blk = this.blocks.dragGroup[b];
+                const blk = this.blocks.dragGroup[b];
                 this.blocks.blockList[blk].container.visible = collapse;
                 if (collapse) {
                     this.blocks.blockList[blk].inCollapsed = false;
@@ -2246,9 +2321,9 @@ class Block {
         if (this.connections[2] !== null) {
             this.blocks.findDragGroup(this.connections[2]);
             for (let b = 0; b < this.blocks.dragGroup.length; b++) {
-                let blk = this.blocks.dragGroup[b];
+                const blk = this.blocks.dragGroup[b];
                 // Look to see if the local parent block is collapsed.
-                let parent = this.blocks.insideInlineCollapsibleBlock(blk);
+                const parent = this.blocks.insideInlineCollapsibleBlock(blk);
                 if (parent === null || !this.blocks.blockList[parent].collapsed) {
                     this.blocks.blockList[blk].container.visible = collapse;
                     if (collapse) {
@@ -2269,8 +2344,8 @@ class Block {
             // The last connection is flow. The second to last
             // connection is child flow.  FIX ME: This will not work
             // if there is more than one arg, e.g. n > 4.
-            let n = this.docks.length,
-                dy;
+            const n = this.docks.length;
+            let dy;
             if (collapse) {
                 dy =
                     this.blocks.blockList[thisBlock].docks[n - 1][1] -
@@ -2290,7 +2365,7 @@ class Block {
         }
 
         // Look to see if we are in a clamp block. If so, readjust.
-        let clampList = [];
+        const clampList = [];
         this.blocks.findNestedClampBlocks(thisBlock, clampList);
         if (clampList.length > 0) {
             this.blocks.clampBlocksToCheck = clampList;
@@ -2309,7 +2384,7 @@ class Block {
     _positionText(blockScale) {
         this.text.textBaseline = "alphabetic";
         this.text.textAlign = "right";
-        let fontSize = 10 * blockScale;
+        const fontSize = 10 * blockScale;
         this.text.font = fontSize + "px Sans";
         this.text.x = Math.floor((TEXTX * blockScale) / 2 + 0.5);
         this.text.y = Math.floor((TEXTY * blockScale) / 2 + 0.5);
@@ -2329,7 +2404,7 @@ class Block {
             this.text.textAlign = "center";
             this.text.x = Math.floor(this.width / 2 + 0.5);
         } else if (this.protoblock.args === 0) {
-            let bounds = this.container.getBounds();
+            // const bounds = this.container.getBounds();
             this.text.x = Math.floor(this.width - 25 + 0.5);
         } else if (this.isCollapsible()) {
             this.text.x += Math.floor(15 * blockScale);
@@ -2397,7 +2472,7 @@ class Block {
      * @returns {void}
      */
     _calculateBlockHitArea() {
-        let hitArea = new createjs.Shape();
+        const hitArea = new createjs.Shape();
         hitArea.graphics
             .beginFill("platformColor.hitAreaGraphicsBeginFill")
             .drawRect(0, 0, this.width, this.hitHeight);
@@ -2410,12 +2485,12 @@ class Block {
      * @returns {void}
      */
     _loadEventHandlers() {
-        let that = this;
-        let thisBlock = this.blocks.blockList.indexOf(this);
+        const that = this;
+        const thisBlock = this.blocks.blockList.indexOf(this);
 
         this._calculateBlockHitArea();
 
-        this.container.on("mouseover", function (event) {
+        this.container.on("mouseover", function () {
             docById("contextWheelDiv").style.display = "none";
 
             if (!that.blocks.logo.runningLilypond) {
@@ -2479,12 +2554,14 @@ class Block {
 
             let topBlk;
 
-            let dx = event.stageX / that.blocks.getStageScale() - that.container.x;
+            const dx = event.stageX / that.blocks.getStageScale() - that.container.x;
             if (!moved && that.isCollapsible() && dx < 30 / that.blocks.getStageScale()) {
                 that.collapseToggle();
             } else if ((!window.hasMouse && getInput) || (window.hasMouse && !moved)) {
                 if (that.name === "media") {
                     that._doOpenMedia(thisBlock);
+                } else if (that.name === "audiofile") {
+                      that._doOpenMedia(thisBlock);
                 } else if (that.name === "loadFile") {
                     that._doOpenMedia(thisBlock);
                 } else if (SPECIALINPUTS.indexOf(that.name) !== -1) {
@@ -2498,7 +2575,7 @@ class Block {
                 } else {
                     if (!that.blocks.getLongPressStatus() && !that.blocks.stageClick) {
                         topBlk = that.blocks.findTopBlock(thisBlock);
-                        console.debug("running from " + that.blocks.blockList[topBlk].name);
+                        // console.debug("running from " + that.blocks.blockList[topBlk].name);
                         if (_THIS_IS_MUSIC_BLOCKS_) {
                             that.blocks.logo.synth.resume();
                         }
@@ -2517,7 +2594,7 @@ class Block {
             } else if (!moved) {
                 if (!that.blocks.getLongPressStatus() && !that.blocks.stageClick) {
                     topBlk = that.blocks.findTopBlock(thisBlock);
-                    console.debug("running from " + that.blocks.blockList[topBlk].name);
+                    // console.debug("running from " + that.blocks.blockList[topBlk].name);
                     if (_THIS_IS_MUSIC_BLOCKS_) {
                         that.blocks.logo.synth.resume();
                     }
@@ -2595,13 +2672,15 @@ class Block {
                 }, 200);
             }
 
-            let oldX = that.container.x;
-            let oldY = that.container.y;
+            const oldX = that.container.x;
+            const oldY = that.container.y;
 
-            let dx = Math.round(event.stageX / that.blocks.getStageScale() + that.offset.x - oldX);
+            const dx = Math.round(
+                event.stageX / that.blocks.getStageScale() + that.offset.x - oldX
+            );
             let dy = Math.round(event.stageY / that.blocks.getStageScale() + that.offset.y - oldY);
 
-            let finalPos = oldY + dy;
+            const finalPos = oldY + dy;
             if (that.blocks.stage.y === 0 && finalPos < 45) {
                 dy += 45 - finalPos;
             }
@@ -2648,7 +2727,7 @@ class Block {
             that.blocks.findDragGroup(thisBlock);
             if (that.blocks.dragGroup.length > 0) {
                 for (let b = 0; b < that.blocks.dragGroup.length; b++) {
-                    let blk = that.blocks.dragGroup[b];
+                    const blk = that.blocks.dragGroup[b];
                     if (b !== 0) {
                         that.blocks.moveBlockRelative(blk, dx, dy);
                     }
@@ -2700,7 +2779,7 @@ class Block {
      * @returns {void}
      */
     _mouseoutCallback(event, moved, haveClick, hideDOM) {
-        let thisBlock = this.blocks.blockList.indexOf(this);
+        const thisBlock = this.blocks.blockList.indexOf(this);
         if (!this.blocks.logo.runningLilypond) {
             document.body.style.cursor = "default";
         }
@@ -2790,7 +2869,7 @@ class Block {
         }
 
         // Numeric pie menus
-        let blk = this.blocks.blockList.indexOf(this);
+        const blk = this.blocks.blockList.indexOf(this);
 
         if (this.blocks.octaveNumber(blk)) {
             return true;
@@ -2832,7 +2911,7 @@ class Block {
         // a block that uses a pie menu. Add block names to the list
         // below and the switch statement in the _changeLabel
         // function.
-        let cblk = this.connections[0];
+        const cblk = this.connections[0];
 
         if (cblk === null) {
             return false;
@@ -2850,7 +2929,7 @@ class Block {
         // a block that uses a pie menu. Add block names to the list
         // below and the switch statement in the _changeLabel
         // function.
-        let cblk = this.connections[0];
+        const cblk = this.connections[0];
 
         if (cblk === null) {
             return false;
@@ -2868,7 +2947,7 @@ class Block {
         // a block that uses a pie menu. Add block names to the list
         // below and the switch statement in the _changeLabel
         // function.
-        let cblk = this.connections[0];
+        const cblk = this.connections[0];
 
         if (cblk === null) {
             return false;
@@ -2923,14 +3002,14 @@ class Block {
      * @returns {void}
      */
     _changeLabel() {
-        let that = this;
-        let x = this.container.x;
-        let y = this.container.y;
+        const that = this;
+        const x = this.container.x;
+        const y = this.container.y;
 
-        let canvasLeft = this.blocks.canvas.offsetLeft + 28 * this.blocks.blockScale;
-        let canvasTop = this.blocks.canvas.offsetTop + 6 * this.blocks.blockScale;
+        const canvasLeft = this.blocks.canvas.offsetLeft + 28 * this.blocks.blockScale;
+        const canvasTop = this.blocks.canvas.offsetTop + 6 * this.blocks.blockScale;
 
-        let selectorWidth = 150;
+        const selectorWidth = 150;
 
         let movedStage = false;
         let fromY,
@@ -2948,7 +3027,8 @@ class Block {
             selectedNoise,
             selectedTemperament,
             selectedValue,
-            selectedType;
+            selectedType,
+            selectedWrap;
         if (!window.hasMouse && this.blocks.stage.y + y > 75) {
             movedStage = true;
             fromY = this.blocks.stage.y;
@@ -2962,7 +3042,7 @@ class Block {
             labelValue = this.value;
         }
 
-        let labelElem = docById("labelDiv");
+        const labelElem = docById("labelDiv");
 
         if (this.name === "text") {
             labelElem.innerHTML =
@@ -2975,14 +3055,14 @@ class Block {
             obj = splitSolfege(this.value);
             // solfnotes_ is used in the interface for internationalization.
             //.TRANS: the note names must be separated by single spaces
-            let solfnotes_ = _("ti la sol fa mi re do").split(" ");
+            const solfnotes_ = _("ti la sol fa mi re do").split(" ");
 
             if (this.piemenuOKtoLaunch()) {
                 piemenuPitches(this, solfnotes_, SOLFNOTES, SOLFATTRS, obj[0], obj[1]);
             }
         } else if (this.name === "scaledegree2") {
             obj = splitScaleDegree(this.value);
-            let scalenotes_ = "7 6 5 4 3 2 1".split(" ");
+            const scalenotes_ = "7 6 5 4 3 2 1".split(" ");
             if (this.piemenuOKtoLaunch()) {
                 piemenuPitches(this, scalenotes_, SCALENOTES, SOLFATTRS, obj[0], obj[1]);
             }
@@ -2991,16 +3071,16 @@ class Block {
                 // If custom temperament is not defined by user,
                 // then custom temperament is supposed to be equal temperament.
                 obj = splitSolfege(this.value);
-                let solfnotes_ = _("ti la sol fa mi re do").split(" ");
+                const solfnotes_ = _("ti la sol fa mi re do").split(" ");
 
                 if (this.piemenuOKtoLaunch()) {
                     piemenuPitches(this, solfnotes_, SOLFNOTES, SOLFATTRS, obj[0], obj[1]);
                 }
             } else {
-                let noteLabels = TEMPERAMENT;
+                const noteLabels = TEMPERAMENT;
 
-                let customLabels = [];
-                for (let lab in noteLabels)
+                const customLabels = [];
+                for (const lab in noteLabels)
                     if (!(lab in PreDefinedTemperaments)) {
                         customLabels.push(lab);
                     }
@@ -3086,8 +3166,8 @@ class Block {
                 selectedInvert = DEFAULTINVERT;
             }
 
-            let invertLabels = [];
-            let invertValues = [];
+            const invertLabels = [];
+            const invertValues = [];
 
             for (let i = 0; i < INVERTMODES.length; i++) {
                 invertLabels.push(_(INVERTMODES[i][1]));
@@ -3104,13 +3184,13 @@ class Block {
                 selectedDrum = DEFAULTDRUM;
             }
 
-            let drumLabels = [];
-            let drumValues = [];
-            let categories = [];
-            let categoriesList = [];
+            const drumLabels = [];
+            const drumValues = [];
+            const categories = [];
+            const categoriesList = [];
             for (let i = 0; i < DRUMNAMES.length; i++) {
                 if (EFFECTSNAMES.indexOf(DRUMNAMES[i][1]) === -1) {
-                    let label = _(DRUMNAMES[i][1]);
+                    const label = _(DRUMNAMES[i][1]);
                     if (getTextWidth(label, "bold 30pt Sans") > 400) {
                         drumLabels.push(label.substr(0, 8) + "...");
                     } else {
@@ -3135,13 +3215,13 @@ class Block {
                 selectedEffect = DEFAULTEFFECT;
             }
 
-            let effectLabels = [];
-            let effectValues = [];
-            let effectcategories = [];
-            let effectcategoriesList = [];
+            const effectLabels = [];
+            const effectValues = [];
+            const effectcategories = [];
+            const effectcategoriesList = [];
             for (let i = 0; i < DRUMNAMES.length; i++) {
                 if (EFFECTSNAMES.indexOf(DRUMNAMES[i][1]) !== -1) {
-                    let label = _(DRUMNAMES[i][1]);
+                    const label = _(DRUMNAMES[i][1]);
                     if (getTextWidth(label, "Bold 30pt Sans") > 400) {
                         effectLabels.push(label.substr(0, 8) + "...");
                     } else {
@@ -3166,8 +3246,8 @@ class Block {
                 selectedType = DEFAULTFILTERTYPE;
             }
 
-            let filterLabels = [];
-            let filterValues = [];
+            const filterLabels = [];
+            const filterValues = [];
             for (let i = 0; i < FILTERTYPES.length; i++) {
                 filterLabels.push(_(FILTERTYPES[i][0]));
                 filterValues.push(FILTERTYPES[i][1]);
@@ -3187,8 +3267,8 @@ class Block {
                 selectedType = DEFAULTOSCILLATORTYPE;
             }
 
-            let oscLabels = [];
-            let oscValues = [];
+            const oscLabels = [];
+            const oscValues = [];
             for (let i = 0; i < OSCTYPES.length; i++) {
                 oscLabels.push(_(OSCTYPES[i][1]));
                 oscValues.push(OSCTYPES[i][1]);
@@ -3202,17 +3282,17 @@ class Block {
                 selectedVoice = DEFAULTVOICE;
             }
 
-            let voiceLabels = [];
-            let voiceValues = [];
-            let categories = [];
-            let categoriesList = [];
+            const voiceLabels = [];
+            const voiceValues = [];
+            const categories = [];
+            const categoriesList = [];
             for (let i = 0; i < VOICENAMES.length; i++) {
                 // Skip custom voice in Beginner Mode.
                 if (beginnerMode && VOICENAMES[i][1] === "custom") {
                     continue;
                 }
 
-                let label = _(VOICENAMES[i][1]);
+                const label = _(VOICENAMES[i][1]);
                 if (getTextWidth(label, "bold 30pt Sans") > 400) {
                     voiceLabels.push(label.substr(0, 8) + "...");
                 } else {
@@ -3236,12 +3316,12 @@ class Block {
                 selectedNoise = DEFAULTNOISE;
             }
 
-            let noiseLabels = [];
-            let noiseValues = [];
-            let categories = [];
-            let categoriesList = [];
+            const noiseLabels = [];
+            const noiseValues = [];
+            const categories = [];
+            const categoriesList = [];
             for (let i = 0; i < NOISENAMES.length; i++) {
-                let label = NOISENAMES[i][0];
+                const label = NOISENAMES[i][0];
                 if (getTextWidth(label, "bold 30pt Sans") > 600) {
                     noiseLabels.push(label.substr(0, 16) + "...");
                 } else {
@@ -3265,8 +3345,8 @@ class Block {
                 selectedTemperament = DEFAULTTEMPERAMENT;
             }
 
-            let temperamentLabels = [];
-            let temperamentValues = [];
+            const temperamentLabels = [];
+            const temperamentValues = [];
             for (let i = 0; i < TEMPERAMENTS.length; i++) {
                 // Skip custom temperament in Beginner Mode.
                 if (beginnerMode && TEMPERAMENTS[i][1] === "custom") {
@@ -3296,14 +3376,14 @@ class Block {
                 selectedValue = true;
             }
 
-            let booleanLabels = [_("true"), _("false")];
-            let booleanValues = [true, false];
+            const booleanLabels = [_("true"), _("false")];
+            const booleanValues = [true, false];
 
             piemenuBoolean(this, booleanLabels, booleanValues, selectedValue);
         } else if (this.name === "grid") {
             selectedValue = this.value;
 
-            let gridLabels = [
+            const gridLabels = [
                 _("Cartesian"),
                 _("polar"),
                 _("Cartesian+polar"),
@@ -3315,7 +3395,7 @@ class Block {
                 _("bass"),
                 _("none")
             ];
-            let gridValues = gridLabels;
+            const gridValues = gridLabels;
 
             piemenuBasic(this, gridLabels, gridValues, selectedValue, platformColor.piemenuBasic);
         } else if (this.name === "outputtools") {
@@ -3327,12 +3407,34 @@ class Block {
                 labels = this.protoblock.extraSearchTerms;
             }
 
-            let values = labels;
+            const values = labels;
             piemenuBasic(this, labels, values, selectedValue, platformColor.piemenuBasic);
+        }  else if (this.name === "wrapmode") {
+            if (this.value != null) {
+                selectedWrap = this.value;
+            } else {
+                selectedWrap = "on";
+            }
+
+            const wrapLabels = [];
+            const wrapValues = [];
+
+            const WRAPMODES = [
+		// .TRANS: on2 should be translated as "on" as in on and off
+                [_("on2"), "on"],
+		// .TRANS: off should be translated as "off" as in on and off
+                [_("off"), "off"]
+            ];
+
+            for (let i = 0; i < WRAPMODES.length; i++) {
+                wrapLabels.push(_(WRAPMODES[i][1]));
+                wrapValues.push(WRAPMODES[i][1]);
+            }
+            piemenuBasic(this, wrapLabels, wrapValues, selectedWrap);
         } else {
             // If the number block is connected to a pitch block, then
             // use the pie menu for octaves. Other special cases as well.
-            let blk = this.blocks.blockList.indexOf(this);
+            const blk = this.blocks.blockList.indexOf(this);
             if (this.blocks.octaveNumber(blk)) {
                 piemenuNumber(this, [8, 7, 6, 5, 4, 3, 2, 1], this.value);
             } else if (this.blocks.noteValueNumber(blk, 2)) {
@@ -3351,7 +3453,7 @@ class Block {
                     piemenuNoteValue(this, this.value);
                 }
             } else if (this.blocks.noteValueNumber(blk, 1)) {
-                let d = this.blocks.noteValueValue(blk);
+                const d = this.blocks.noteValueValue(blk);
                 let values;
                 if (d === 1) {
                     values = [8, 7, 6, 5, 4, 3, 2, 1];
@@ -3412,13 +3514,14 @@ class Block {
                         );
                         break;
                     case "pitchnumber":
+                        // eslint-disable-next-line no-case-declarations
                         let temperament;
                         for (let i = 0; i < this.blocks.blockList.length; i++) {
                             if (
                                 this.blocks.blockList[i].name === "settemperament" &&
                                 this.blocks.blockList[i].connections[0] !== null
                             ) {
-                                let index = this.blocks.blockList[i].connections[1];
+                                const index = this.blocks.blockList[i].connections[1];
                                 temperament = this.blocks.blockList[index].value;
                             }
                         }
@@ -3434,7 +3537,7 @@ class Block {
                                 this.value
                             );
                         } else {
-                            let pitchNumbers = [];
+                            const pitchNumbers = [];
                             for (let i = 0; i < TEMPERAMENT[temperament]["pitchNumber"]; i++) {
                                 pitchNumbers.push(i);
                             }
@@ -3459,11 +3562,11 @@ class Block {
             }
         }
 
-        let blk = this.blocks.blockList.indexOf(this);
+        // const blk = this.blocks.blockList.indexOf(this);
         if (!this._usePiemenu()) {
             let focused = false;
 
-            let __blur = function (event) {
+            const __blur = function (event) {
                 // Not sure why the change in the input is not available
                 // immediately in FireFox. We need a workaround if hardware
                 // acceleration is enabled.
@@ -3478,6 +3581,7 @@ class Block {
                 labelElem.classList.remove("hasKeyboard");
 
                 window.scroll(0, 0);
+                // eslint-disable-next-line no-use-before-define
                 that.label.removeEventListener("keypress", __keypress);
 
                 if (movedStage) {
@@ -3486,7 +3590,7 @@ class Block {
                 }
             };
 
-            let __input = function (event) {
+            const __input = function () {
                 that._labelChanged(false, true);
             };
 
@@ -3564,7 +3668,7 @@ class Block {
     _noteValueNumber(c) {
         // Is this a number block being used as a note value
         // denominator argument?
-        let dblk = this.connections[0];
+        const dblk = this.connections[0];
         // Are we connected to a divide block?
         if (
             this.name === "number" &&
@@ -3589,6 +3693,7 @@ class Block {
                             return this.blocks.blockList[cblk].connections[1] === dblk;
                         case "meter":
                             this._check_meter_block = cblk;
+                        // eslint-disable-next-line no-fallthrough
                         case "setbpm2":
                         case "setmasterbpm2":
                         case "stuplet":
@@ -3611,7 +3716,7 @@ class Block {
     _noteValueValue() {
         // Return the number block value being used as a note value
         // denominator argument.
-        let dblk = this.connections[0];
+        const dblk = this.connections[0];
         // We are connected to a divide block.
         // Is the divide block connected to a note value block?
         let cblk = this.blocks.blockList[dblk].connections[0];
@@ -3632,6 +3737,7 @@ class Block {
                     }
                 case "meter":
                     this._check_meter_block = cblk;
+                // eslint-disable-next-line no-fallthrough
                 case "setbpm2":
                 case "setmasterbpm2":
                 case "stuplet":
@@ -3658,25 +3764,12 @@ class Block {
         return 1;
     }
 
-    _octaveNumber() {
-        // Is this a number block being used as an octave argument?
-        return (
-            this.name === "number" &&
-            this.connections[0] !== null &&
-            ["pitch", "setpitchnumberoffset", "invert1", "tofrequency", "nthmodalpitch"].indexOf(
-                this.blocks.blockList[this.connections[0]].name
-            ) !== -1 &&
-            this.blocks.blockList[this.connections[0]].connections[2] ===
-                this.blocks.blockList.indexOf(this)
-        );
-    }
-
     _checkWidgets(closeInput) {
         // Detect if label is changed, then reinit widget windows
         // if they are open.
-        let thisBlock = this.blocks.blockList.indexOf(this);
-        let topBlock = this.blocks.findTopBlock(thisBlock);
-        let widgetTitle = document.getElementsByClassName("wftTitle");
+        const thisBlock = this.blocks.blockList.indexOf(this);
+        const topBlock = this.blocks.findTopBlock(thisBlock);
+        const widgetTitle = document.getElementsByClassName("wftTitle");
         let lockInit = false;
         if (closeInput === false) {
             for (let i = 0; i < widgetTitle.length; i++) {
@@ -3736,11 +3829,11 @@ class Block {
             docById("wheelDiv").style.display = "none";
         }
 
-        let oldValue = this.value;
+        const oldValue = this.value;
         let newValue = this.label.value;
 
         if (this.labelattr != null) {
-            let attrValue = this.labelattr.value;
+            const attrValue = this.labelattr.value;
             switch (attrValue) {
                 case "𝄪":
                 case "♯":
@@ -3765,7 +3858,7 @@ class Block {
 
         c = this.connections[0];
         if (this.name === "text" && c != null) {
-            let cblock = this.blocks.blockList[c];
+            const cblock = this.blocks.blockList[c];
             let uniqueValue;
             switch (cblock.name) {
                 case "action":
@@ -3789,7 +3882,7 @@ class Block {
                     // In case of custom temperament
                     uniqueValue = this.blocks.findUniqueCustomName(newValue);
                     newValue = uniqueValue;
-                    for (let pitchNumber in TEMPERAMENT["custom"]) {
+                    for (const pitchNumber in TEMPERAMENT["custom"]) {
                         if (pitchNumber !== "pitchNumber") {
                             if (oldValue == TEMPERAMENT["custom"][pitchNumber][1]) {
                                 TEMPERAMENT["custom"][pitchNumber][1] = newValue;
@@ -3797,6 +3890,7 @@ class Block {
                         }
                     }
                     this.value = newValue;
+                    // eslint-disable-next-line no-case-declarations
                     let label = this.value.toString();
                     if (getTextWidth(label, "bold 20pt Sans") > TEXTWIDTH) {
                         label = label.substr(0, STRINGLEN) + "...";
@@ -3812,7 +3906,7 @@ class Block {
 
         // Update the block value and block text.
         if (this.name === "number") {
-            let cblk1 = this.connections[0];
+            const cblk1 = this.connections[0];
             let cblk2;
 
             if (cblk1 !== null) {
@@ -3836,7 +3930,7 @@ class Block {
             }
 
             if (isNaN(this.value)) {
-                let thisBlock = this.blocks.blockList.indexOf(this);
+                const thisBlock = this.blocks.blockList.indexOf(this);
                 this.blocks.errorMsg(newValue + ": " + _("Not a number"), thisBlock);
                 this.blocks.refreshCanvas();
                 this.value = oldValue;
@@ -3880,7 +3974,7 @@ class Block {
             while (getTextWidth(nlabel, "bold 20pt Sans") > TEXTWIDTH) {
                 slen -= 1;
                 nlabel = "" + label.substr(0, slen) + "...";
-                let foo = getTextWidth(nlabel, "bold 20pt Sans");
+                // const foo = getTextWidth(nlabel, "bold 20pt Sans");
                 if (slen <= STRINGLEN) {
                     break;
                 }
@@ -3902,7 +3996,7 @@ class Block {
         this.updateCache();
 
         if (this.name === "text" && c != null) {
-            let cblock = this.blocks.blockList[c];
+            const cblock = this.blocks.blockList[c];
             switch (cblock.name) {
                 case "action":
                     // If the label was the name of an action, update the
@@ -3924,9 +4018,10 @@ class Block {
                         this.blocks.actionHasReturn(c),
                         this.blocks.actionHasArgs(c)
                     );
-                    let blockPalette = this.blocks.palettes.dict["action"];
+                    // eslint-disable-next-line no-case-declarations
+                    const blockPalette = this.blocks.palettes.dict["action"];
                     for (let blk = 0; blk < blockPalette.protoList.length; blk++) {
-                        let block = blockPalette.protoList[blk];
+                        const block = blockPalette.protoList[blk];
                         if (oldValue === _("action")) {
                             if (block.name === "nameddo" && block.defaults.length === 0) {
                                 block.hidden = true;
@@ -3987,7 +4082,8 @@ class Block {
                     }
                     break;
                 case "temperament1":
-                    let temptemperament = TEMPERAMENT[oldValue];
+                    // eslint-disable-next-line no-case-declarations
+                    const temptemperament = TEMPERAMENT[oldValue];
                     delete TEMPERAMENT[oldValue];
                     TEMPERAMENT[newValue] = temptemperament;
                     updateTemperaments();
@@ -4021,7 +4117,7 @@ class Block {
  * @returns {void}
  */
 function $() {
-    let elements = new Array();
+    const elements = new Array();
 
     for (let i = 0; i < arguments.length; i++) {
         let element = arguments[i];
@@ -4041,19 +4137,6 @@ function $() {
 
 window.hasMouse = false;
 // Mousemove is not emulated for touch
-document.addEventListener("mousemove", function (e) {
+document.addEventListener("mousemove", function () {
     window.hasMouse = true;
 });
-
-function _blockMakeBitmap(data, callback, args) {
-    // Async creation of bitmap from SVG data.
-    // Works with Chrome, Safari, Firefox (untested on IE).
-    let img = new Image();
-
-    img.onload = function () {
-        let bitmap = new createjs.Bitmap(img);
-        callback(bitmap, args);
-    };
-
-    img.src = "data:image/svg+xml;base64," + window.btoa(unescape(encodeURIComponent(data)));
-}

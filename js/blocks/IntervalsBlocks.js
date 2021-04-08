@@ -1,3 +1,24 @@
+/*
+   global last, _, ValueBlock, FlowClampBlock, FlowBlock, NOINPUTERRORMSG, LeftBlock, Singer,
+   beginnerMode, blocks
+ */
+
+/*
+   Global locations
+   - js/utils/utils.js
+        _, last
+   - js/protoblocks.js 
+    ValueBlock, FlowClampBlock, LeftBlock, FlowBlock
+   - js/logo.js
+    NOINPUTERRORMSG
+   - js/turtle-singer.js
+    Singer
+   - js/activity.js
+    beginnerMode, blocks
+ */
+
+/*exported setupIntervalsBlocks*/
+
 function setupIntervalsBlocks() {
     class SetTemperamentBlock extends FlowBlock {
         constructor() {
@@ -25,7 +46,7 @@ function setupIntervalsBlocks() {
             ]);
         }
 
-        flow(args, logo) {
+        flow(args) {
             Singer.IntervalsActions.setTemperament(args[0], args[1], args[2]);
         }
     }
@@ -35,9 +56,7 @@ function setupIntervalsBlocks() {
             super("temperamentname");
             this.setPalette("tone");
             this.setHelpString([
-                _(
-                    "The Temperament name block is used to select a tuning method."
-                ),
+                _("The Temperament name block is used to select a tuning method."),
                 "documentation",
                 ""
             ]);
@@ -77,26 +96,27 @@ function setupIntervalsBlocks() {
         }
 
         arg(logo, turtle, blk, receivedArg) {
-            let cblk = logo.blocks.blockList[blk].connections[1];
+            const cblk = logo.blocks.blockList[blk].connections[1];
             //find block at end of chain
             if (cblk === null) {
                 logo.errorMsg(NOINPUTERRORMSG, blk);
                 return 0;
             } else {
                 let currentblock = cblk;
-                while (true) {
-                    let blockToCheck = logo.blocks.blockList[currentblock];
+                let condition = true;
+                while (condition) {
+                    const blockToCheck = logo.blocks.blockList[currentblock];
                     if (blockToCheck.name === "intervalname") {
                         // Augmented or diminished only
                         if (blockToCheck.value[0] === "a") {
-                            return (logo.parseArg(logo, turtle, cblk, blk, receivedArg) + 1);
+                            return logo.parseArg(logo, turtle, cblk, blk, receivedArg) + 1;
                         } else if (blockToCheck.value[0] === "d") {
-                            return (logo.parseArg(logo, turtle, cblk, blk, receivedArg) - 1);
+                            return logo.parseArg(logo, turtle, cblk, blk, receivedArg) - 1;
                         } else {
                             return logo.parseArg(logo, turtle, cblk, blk, receivedArg);
                         }
                     } else if (blockToCheck.name !== "doubly") {
-                        let value = logo.parseArg(logo, turtle, cblk, blk, receivedArg);
+                        const value = logo.parseArg(logo, turtle, cblk, blk, receivedArg);
                         if (typeof value === "number") {
                             return value * 2;
                         } else if (typeof value === "string") {
@@ -107,8 +127,10 @@ function setupIntervalsBlocks() {
                     }
 
                     currentblock = logo.blocks.blockList[currentblock].connections[1];
-                    if (currentblock === null)
+                    if (currentblock === null) {
+                        condition = false;
                         return 0;
+                    }
                 }
             }
         }
@@ -143,45 +165,46 @@ function setupIntervalsBlocks() {
         }
 
         arg(logo, turtle, blk) {
-            let cblk = logo.blocks.blockList[blk].connections[1];
+            const cblk = logo.blocks.blockList[blk].connections[1];
             if (cblk === null) {
                 logo.errorMsg(NOINPUTERRORMSG, blk);
                 return 0;
             }
-            let tur = logo.turtles.ithTurtle(turtle);
+            const tur = logo.turtles.ithTurtle(turtle);
 
-            let saveSuppressStatus = tur.singer.suppressOutput;
+            const saveSuppressStatus = tur.singer.suppressOutput;
 
             // We need to save the state of the boxes, dicts, and heap
             // although there is a potential of a boxes
             // collision with other turtles.
-            let saveBoxes = JSON.stringify(logo.boxes);
-            let saveTurtleHeaps = JSON.stringify(logo.turtleHeaps[turtle]);
+            const saveBoxes = JSON.stringify(logo.boxes);
+            const saveTurtleHeaps = JSON.stringify(logo.turtleHeaps[turtle]);
             // And the turtle state
-            let saveX = tur.x;
-            let saveY = tur.y;
-            let saveColor = tur.painter.color;
-            let saveValue = tur.painter.value;
-            let saveChroma = tur.painter.chroma;
-            let saveStroke = tur.painter.stroke;
-            let saveCanvasAlpha = tur.painter.canvasAlpha;
-            let saveOrientation = tur.orientation;
-            let savePenState = tur.painter.penState;
+            const saveX = tur.x;
+            const saveY = tur.y;
+            const saveColor = tur.painter.color;
+            const saveValue = tur.painter.value;
+            const saveChroma = tur.painter.chroma;
+            const saveStroke = tur.painter.stroke;
+            const saveCanvasAlpha = tur.painter.canvasAlpha;
+            const saveOrientation = tur.orientation;
+            const savePenState = tur.painter.penState;
 
             tur.singer.suppressOutput = true;
 
             tur.singer.justCounting.push(true);
             tur.singer.justMeasuring.push(true);
 
-            for (let b in tur.endOfClampSignals) {
+            for (const b in tur.endOfClampSignals) {
                 tur.butNotThese[b] = [];
-                for (let i in tur.endOfClampSignals[b]) {
+                for (const i in tur.endOfClampSignals[b]) {
                     tur.butNotThese[b].push(i);
                 }
             }
 
-            let actionArgs = [];
-            let saveNoteCount = tur.singer.notesPlayed;
+            const actionArgs = [];
+            const saveNoteCount = tur.singer.notesPlayed;
+            const saveTurtleDicts = JSON.stringify(logo.turtleDicts[turtle]);
             let distance = 0;
             tur.running = true;
             logo.runFromBlockNow(logo, turtle, cblk, true, actionArgs, tur.queue.length);
@@ -240,53 +263,56 @@ function setupIntervalsBlocks() {
         }
 
         arg(logo, turtle, blk) {
-            let cblk = logo.blocks.blockList[blk].connections[1];
+            const cblk = logo.blocks.blockList[blk].connections[1];
             if (cblk === null) {
                 logo.errorMsg(NOINPUTERRORMSG, blk);
                 return 0;
             }
-            let tur = logo.turtles.ithTurtle(turtle);
+            const tur = logo.turtles.ithTurtle(turtle);
 
-            let saveSuppressStatus = tur.singer.suppressOutput;
+            const saveSuppressStatus = tur.singer.suppressOutput;
 
             // We need to save the state of the boxes, dicts, and heap
             // although there is a potential of a boxes
             // collision with other turtles.
-            let saveBoxes = JSON.stringify(logo.boxes);
-            let saveTurtleHeaps = JSON.stringify(logo.turtleHeaps[turtle]);
-            let saveTurtleDicts = JSON.stringify(logo.turtleDicts[turtle]);
+            const saveBoxes = JSON.stringify(logo.boxes);
+            const saveTurtleHeaps = JSON.stringify(logo.turtleHeaps[turtle]);
+            const saveTurtleDicts = JSON.stringify(logo.turtleDicts[turtle]);
             // And the turtle state
-            let saveX = tur.x;
-            let saveY = tur.y;
-            let saveColor = tur.painter.color;
-            let saveValue = tur.painter.value;
-            let saveChroma = tur.painter.chroma;
-            let saveStroke = tur.painter.stroke;
-            let saveCanvasAlpha = tur.painter.canvasAlpha;
-            let saveOrientation = tur.orientation;
-            let savePenState = tur.painter.penState;
+            const saveX = tur.x;
+            const saveY = tur.y;
+            const saveColor = tur.painter.color;
+            const saveValue = tur.painter.value;
+            const saveChroma = tur.painter.chroma;
+            const saveStroke = tur.painter.stroke;
+            const saveCanvasAlpha = tur.painter.canvasAlpha;
+            const saveOrientation = tur.orientation;
+            const savePenState = tur.painter.penState;
 
             tur.singer.suppressOutput = true;
 
             tur.singer.justCounting.push(true);
             tur.singer.justMeasuring.push(true);
 
-            for (let b in tur.endOfClampSignals) {
+            for (const b in tur.endOfClampSignals) {
                 tur.butNotThese[b] = [];
-                for (let i in tur.endOfClampSignals[b]) {
+                for (const i in tur.endOfClampSignals[b]) {
                     tur.butNotThese[b].push(i);
                 }
             }
 
-            let actionArgs = [];
-            let saveNoteCount = tur.singer.notesPlayed;
+            const actionArgs = [];
+            const saveNoteCount = tur.singer.notesPlayed;
             tur.running = true;
             let distance = 0;
             logo.runFromBlockNow(logo, turtle, cblk, true, actionArgs, tur.queue.length);
 
             if (tur.singer.firstPitch.length > 0 && tur.singer.lastPitch.length > 0) {
                 distance = Singer.scalarDistance(
-                    logo, turtle, last(tur.singer.firstPitch), last(tur.singer.lastPitch)
+                    logo,
+                    turtle,
+                    last(tur.singer.firstPitch),
+                    last(tur.singer.lastPitch)
                 );
                 tur.singer.firstPitch.pop();
                 tur.singer.lastPitch.pop();
@@ -333,18 +359,8 @@ function setupIntervalsBlocks() {
                 this.setHelpString();
                 this.makeMacro((x, y) => [
                     [0, "semitoneinterval", x, y, [null, 1, 6, 7]],
-                    ...[
-                        isDown
-                            ? [1, "minus", 0, 0, [0, 8, 3]]
-                            : [1, "plus", 0, 0, [0, 2, 3]]
-                    ],
-                    [
-                        2,
-                        ["intervalname", { value: type + " " + value }],
-                        0,
-                        0,
-                        [1]
-                    ],
+                    ...[isDown ? [1, "minus", 0, 0, [0, 8, 3]] : [1, "plus", 0, 0, [0, 2, 3]]],
+                    [2, ["intervalname", { value: type + " " + value }], 0, 0, [1]],
                     [3, "multiply", 0, 0, [1, 4, 5]],
                     [4, ["number", { value: 0 }], 0, 0, [3]],
                     [5, ["number", { value: 12 }], 0, 0, [3]],
@@ -392,8 +408,33 @@ function setupIntervalsBlocks() {
         constructor() {
             super("semitoneinterval");
             this.setPalette("intervals");
-            this.piemenuValuesC1 = [-12, -11, -10, -9, -8, -7, -6, -5, -4, -3, -2, -1, 0,
-                                    1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
+            this.piemenuValuesC1 = [
+                -12,
+                -11,
+                -10,
+                -9,
+                -8,
+                -7,
+                -6,
+                -5,
+                -4,
+                -3,
+                -2,
+                -1,
+                0,
+                1,
+                2,
+                3,
+                4,
+                5,
+                6,
+                7,
+                8,
+                9,
+                10,
+                11,
+                12
+            ];
             this.setHelpString([
                 _(
                     "The Semi-tone interval block calculates a relative interval based on half steps."
@@ -422,8 +463,7 @@ function setupIntervalsBlocks() {
         }
 
         flow(args, logo, turtle, blk) {
-            if (args[1] === undefined)
-                return;
+            if (args[1] === undefined) return;
 
             Singer.IntervalsActions.setSemitoneInterval(args[0], turtle, blk);
 
@@ -549,9 +589,8 @@ function setupIntervalsBlocks() {
             ]);
         }
 
-        flow(args, logo, turtle, blk, receivedArg, actionArgs, isflow) {
-            if (args[1] === undefined)
-                return;
+        flow(args, logo, turtle, blk) {
+            if (args[1] === undefined) return;
 
             Singer.IntervalsActions.setScalarInterval(args[0], turtle, blk);
 
@@ -580,7 +619,7 @@ function setupIntervalsBlocks() {
             });
             this.makeMacro((x, y) => [
                 [0, "definemode", x, y, [null, 1, 2, 16]],
-                [1, ["modename", { value: "custom" }], 0, 0, [0]],
+                [1, ["text", { value: "custom" }], 0, 0, [0]],
                 [2, "pitchnumber", 0, 0, [0, 3, 4]],
                 [3, ["number", { value: 0 }], 0, 0, [2]],
                 [4, "pitchnumber", 0, 0, [2, 5, 6]],
@@ -600,8 +639,7 @@ function setupIntervalsBlocks() {
         }
 
         flow(args, logo, turtle, blk) {
-            if (args[1] === undefined)
-                return;
+            if (args[1] === undefined) return;
 
             Singer.IntervalsActions.defineMode(args[0], turtle, blk);
 
@@ -652,9 +690,7 @@ function setupIntervalsBlocks() {
             this.beginnerBlock(true);
             this.parameter = true;
             this.setHelpString([
-                _(
-                    "The Mode length block is the number of notes in the current scale."
-                ) +
+                _("The Mode length block is the number of notes in the current scale.") +
                     " " +
                     _("Most Western scales have 7 notes."),
                 "documentation",
@@ -766,9 +802,7 @@ function setupIntervalsBlocks() {
                 ]);
             } else {
                 this.setHelpString([
-                    _("The Set key block is used to set the key and mode,") +
-                        " " +
-                        _("eg C Major"),
+                    _("The Set key block is used to set the key and mode,") + " " + _("eg C Major"),
                     "documentation",
                     null,
                     "movablehelp"
@@ -794,7 +828,7 @@ function setupIntervalsBlocks() {
 
         flow(args, logo, turtle, blk) {
             if (args.length === 2) {
-                let modename = Singer.IntervalsActions.GetModename(args[1]);
+                const modename = Singer.IntervalsActions.GetModename(args[1]);
                 logo.modeBlock = blocks.blockList[blk].connections[2];
 
                 Singer.IntervalsActions.setKey(args[0], args[1], turtle, blk);

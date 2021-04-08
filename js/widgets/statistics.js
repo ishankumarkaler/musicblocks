@@ -18,6 +18,10 @@
 
 /** This widget displays the status of selected parameters and notes as they are being played. */
 class StatsWindow {
+
+    /**
+     * @constructor
+     */
     constructor() {
         this.isOpen = true;
 
@@ -28,13 +32,29 @@ class StatsWindow {
             this.isOpen = false;
             blocks.showBlocks();
             this.widgetWindow.destroy();
+            logo.statsWindow = null;
         };
         this.doAnalytics();
 
+        this.widgetWindow.onmaximize = () => {
+            this.widgetWindow.getWidgetBody().innerHTML = "";
+            if (this.widgetWindow.isMaximized()) {
+                this.widgetWindow.getWidgetBody().style.display = "flex";
+                this.widgetWindow.getWidgetBody().style.justifyContent = "space-between";
+                this.widgetWindow.getWidgetBody().style.padding = "0 2vw";
+            } else {
+                this.widgetWindow.getWidgetBody().style.padding = "0 0";
+            }
+            this.doAnalytics();
+        };
         this.widgetWindow.sendToCenter();
     }
 
-    /** Renders and carries out analysis of the MB project. */
+    /**
+     * Renders and carries out analysis of the MB project.
+     * @public 
+     * @returns {void}
+     */
     doAnalytics() {
         toolbar.closeAuxToolbar(_showHideAuxMenu);
         blocks.activeBlock = null;
@@ -52,7 +72,11 @@ class StatsWindow {
             const imageData = myRadarChart.toBase64Image();
             const img = new Image();
             img.src = imageData;
-            img.width = 200;
+            if (this.widgetWindow.isMaximized()) {
+                img.width = this.widgetWindow.getWidgetFrame().getBoundingClientRect().height - 80;
+            } else {
+                img.width = 200;
+            }
             this.widgetWindow.getWidgetBody().appendChild(img);
             blocks.hideBlocks();
             logo.showBlocksAfterRun = false;
@@ -66,6 +90,11 @@ class StatsWindow {
         this.widgetWindow.getWidgetBody().appendChild(this.jsonObject);
     }
 
+    /**
+     * @public
+     * @param {Array} stats 
+     * @returns {void}
+     */
     displayInfo(stats) {
         const lowHertz = stats["lowestNote"][2] + 0.5;
         const highHertz = stats["highestNote"][2] + 0.5;
@@ -79,18 +108,18 @@ class StatsWindow {
             "<li>quintuplets: " +
             stats["quintuplets"] +
             "</li>" +
-            "<li>pitch names: " +
-            Array.from(stats["pitchNames"]) +
+            "<li style=\"white-space: pre-wrap; width: 150px\">pitch names: " +
+            Array.from(stats["pitchNames"]).join(", ") +
             "</li>" +
             "<li>number of notes: " +
             stats["numberOfNotes"] +
             "</li>" +
-            "<li>lowest note: " +
+            "<li style=\"white-space: pre-wrap; width: 150px\">lowest note: " +
             stats["lowestNote"][0] +
             " , " +
             lowHertz.toFixed(0) +
             "Hz</li>" +
-            "<li>highest note: " +
+            "<li style=\"white-space: pre-wrap; width: 150px\">highest note: " +
             stats["highestNote"][0] +
             " , " +
             highHertz.toFixed(0) +

@@ -3,6 +3,13 @@
     "es6": true,
     "browser": true
   },
+  "parser": "babel-eslint",
+  "parserOptions": {
+    "sourceType": "script",
+    "ecmaFeatures": {
+      "globalReturn": false
+    }
+  },
   "extends": ["eslint:recommended", "prettier"],
   "rules": {
     "no-console": "warn",
@@ -17,6 +24,7 @@
       }
     ],
     "no-undef": "error",
+    "no-redeclare": [2, {"builtinGlobals": false}],
     "indent": ["warn", 4, { "SwitchCase": 1 }],
     "quotes": ["warn", "double", { "avoidEscape": true }],
     "semi": "error",

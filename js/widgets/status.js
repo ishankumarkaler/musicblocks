@@ -13,6 +13,7 @@
 // This widget makes displays the status of selected parameters and
 // notes as they are being played.
 
+/* exported StatusMatrix */
 class StatusMatrix {
     static BUTTONDIVWIDTH = 128;
     static BUTTONSIZE = 53;
@@ -21,21 +22,20 @@ class StatusMatrix {
     static INNERWINDOWWIDTH = StatusMatrix.OUTERWINDOWWIDTH - StatusMatrix.BUTTONSIZE * 1.5;
     static FONTSCALEFACTOR = 75;
 
+    /**
+     * Initializes the status matrix. First removes the
+     * previous matrix and them make another one in DOM (document
+     * object model)
+     */
     init() {
-        let x, y; //Drop coordinates of statusDiv
-        // Initializes the status matrix. First removes the
-        // previous matrix and them make another one in DOM (document
-        // object model)
-
         this.isOpen = true;
-
+        this.isMaximized = false;
         this._cellScale = window.innerWidth / 1200;
         let iconSize = StatusMatrix.ICONSIZE * this._cellScale;
 
         this.widgetWindow = window.widgetWindows.windowFor(this, "status", "status");
         this.widgetWindow.clear();
         this.widgetWindow.show();
-
         // For the button callbacks
         let cell;
 
@@ -57,12 +57,13 @@ class StatusMatrix {
         iconSize = Math.floor(this._cellScale * 24);
 
         cell = row.insertCell();
-        cell.style.backgroundColor = platformColor.selectorBackground;
+        cell.style.backgroundColor = "#FFFFFF";
         cell.className = "headcol";
         cell.style.height = Math.floor(MATRIXBUTTONHEIGHT * this._cellScale) + "px";
-        cell.style.width = StatusMatrix.BUTTONSIZE * this._cellScale + "px";
-        cell.innerHTML = "&nbsp;";
+        // cell.style.width = StatusMatrix.BUTTONSIZE * this._cellScale*2 + "px";
+        cell.style.width = "212.5px";
 
+        cell.innerHTML = "&nbsp;";
         // One column per mouse/turtle
         for (const turtle of turtles.turtleList) {
             if (turtle.inTrash) {
@@ -70,7 +71,7 @@ class StatusMatrix {
             }
 
             cell = row.insertCell();
-            cell.style.backgroundColor = platformColor.labelColor;
+            cell.style.backgroundColor = "#FFFFFF";
 
             if (_THIS_IS_MUSIC_BLOCKS_) {
                 cell.innerHTML =
@@ -95,12 +96,23 @@ class StatusMatrix {
                     iconSize +
                     '">&nbsp;&nbsp;';
             }
-            cell.style.width = StatusMatrix.BUTTONSIZE * this._cellScale + "px";
+            cell.style.width = "212.5px";
+            this.widgetWindow.onmaximize = () => {
+                this.isMaximized = !this.isMaximized;
+                cell.style.width = "100vw";
+                cell.style.paddingLeft = "30px";
+                cell.style.fontSize =
+                    Math.floor(this._cellScale * StatusMatrix.FONTSCALEFACTOR) * 0.9 + "%";
+                if (!this.isMaximized) {
+                    cell.style.width = "212.5px";
+                }
+            };
+            // cell.style.width = StatusMatrix.BUTTONSIZE * this._cellScale*2 + "px";
             cell.style.height = Math.floor(MATRIXSOLFEHEIGHT * this._cellScale) + "px";
             cell.className = "headcol";
         }
 
-        console.debug("active turtles: " + turtles.turtleList.length);
+        // console.debug("active turtles: " + turtles.turtleList.length);
 
         // One row per field, one column per mouse (plus the labels)
         let label;
@@ -108,9 +120,10 @@ class StatusMatrix {
             const row = header.insertRow();
 
             cell = row.insertCell(); // i + 1);
-            cell.style.fontSize = Math.floor(this._cellScale * StatusMatrix.FONTSCALEFACTOR) + "%";
+            cell.style.fontSize =
+                Math.floor(this._cellScale * StatusMatrix.FONTSCALEFACTOR) * 0.9 + "%";
 
-            console.debug(statusField[1]);
+            // console.debug(statusField[1]);
 
             switch (statusField[1]) {
                 case "plus":
@@ -127,59 +140,71 @@ class StatusMatrix {
                 case "namedbox":
                     label = logo.blocks.blockList[statusField[0]].privateData;
                     break;
+                case "heap":
+                    label = _("heap");
+                    break;
                 case "bpm":
                 case "bpmfactor":
                     if (localStorage.languagePreference === "ja") {
                         label = _("beats per minute2");
                     } else {
-                        label = logo.blocks.blockList[statusField[0]]
-                            .protoblock.staticLabels[0];
+                        label = logo.blocks.blockList[statusField[0]].protoblock.staticLabels[0];
                     }
-                    console.debug(label);
+                    // console.debug(label);
                     break;
                 case "outputtools":
                     label = logo.blocks.blockList[statusField[0]].privateData;
                     break;
                 default:
-                    label = logo.blocks.blockList[statusField[0]].protoblock
-                        .staticLabels[0];
+                    label = logo.blocks.blockList[statusField[0]].protoblock.staticLabels[0];
                     break;
             }
-
-            cell.innerHTML = "&nbsp;<b>" + label + "</b>";
+            let str = label;
+            str = label.charAt(0).toUpperCase() + label.slice(1);
+            // console.log(str);
+            cell.innerHTML = "&nbsp;<b>" + str + "</b>";
             cell.style.height = Math.floor(MATRIXBUTTONHEIGHT * this._cellScale) + "px";
             cell.style.backgroundColor = platformColor.selectorBackground;
-
+            cell.style.paddingLeft = "10px";
             turtles.turtleList.forEach(() => {
                 cell = row.insertCell();
                 cell.style.backgroundColor = platformColor.selectorBackground;
-                cell.style.fontSize = Math.floor(this._cellScale * StatusMatrix.FONTSCALEFACTOR) + "%";
+                cell.style.fontSize =
+                    Math.floor(this._cellScale * StatusMatrix.FONTSCALEFACTOR) * 0.9 + "%";
                 cell.innerHTML = "";
                 cell.style.height = Math.floor(MATRIXSOLFEHEIGHT * this._cellScale) + "px";
                 cell.style.textAlign = "center";
-            })
+            });
         }
 
         if (_THIS_IS_MUSIC_BLOCKS_) {
             const row = header.insertRow();
             cell = row.insertCell();
-            cell.style.fontSize = Math.floor(this._cellScale * StatusMatrix.FONTSCALEFACTOR) + "%";
-            cell.innerHTML = "&nbsp;<b>" + _("note") + "</b>";
+            cell.style.fontSize =
+                Math.floor(this._cellScale * StatusMatrix.FONTSCALEFACTOR) * 0.9 + "%";
+            const str = _("note");
+            const label = str.charAt(0).toUpperCase() + str.slice(1);
+            cell.innerHTML = "&nbsp;<b>" + label + "</b>";
             cell.style.height = Math.floor(MATRIXBUTTONHEIGHT * this._cellScale) + "px";
             cell.style.backgroundColor = platformColor.selectorBackground;
-
-            turtles.turtleList.forEach(()=>{
+            cell.style.paddingLeft = "10px";
+            turtles.turtleList.forEach(() => {
                 cell = row.insertCell();
                 cell.style.backgroundColor = platformColor.selectorBackground;
-                cell.style.fontSize = Math.floor(this._cellScale * StatusMatrix.FONTSCALEFACTOR) + "%";
+                cell.style.fontSize =
+                    Math.floor(this._cellScale * StatusMatrix.FONTSCALEFACTOR) * 0.9 + "%";
                 cell.innerHTML = "";
                 cell.style.height = Math.floor(MATRIXSOLFEHEIGHT * this._cellScale) + "px";
                 cell.style.textAlign = "center";
-            })
+            });
         }
         this.widgetWindow.sendToCenter();
     }
 
+    /**
+     * @public
+     * @returns {void}
+     */
     updateAll() {
         // Update status of all of the voices in the matrix.
         logo.updatingStatusMatrix = true;
@@ -214,29 +239,22 @@ class StatusMatrix {
                         value = logo.blocks.blockList[statusField[0]].value.toFixed(0);
                         break;
                     case "mynotevalue":
-                        value = mixedNumber(
-                            logo.blocks.blockList[statusField[0]].value
-                        );
+                        value = mixedNumber(logo.blocks.blockList[statusField[0]].value);
                         break;
                     case "elapsednotes2":
                         blk = statusField[0];
                         cblk = logo.blocks.blockList[blk].connections[1];
                         noteValue = logo.parseArg(logo, t, cblk, blk, null);
                         value =
-                            mixedNumber(
-                                logo.blocks.blockList[statusField[0]].value
-                            ) +
+                            mixedNumber(logo.blocks.blockList[statusField[0]].value) +
                             " × " +
                             mixedNumber(noteValue);
                         break;
                     case "elapsednotes":
-                        value = mixedNumber(
-                            logo.blocks.blockList[statusField[0]].value
-                        );
+                        value = mixedNumber(logo.blocks.blockList[statusField[0]].value);
                         break;
                     case "namedbox":
-                        name = logo.blocks.blockList[statusField[0]]
-                            .privateData;
+                        name = logo.blocks.blockList[statusField[0]].privateData;
                         if (name in logo.boxes) {
                             value = logo.boxes[name];
                         } else {
@@ -268,6 +286,9 @@ class StatusMatrix {
                         } else {
                             value = "";
                         }
+                        break;
+                    case "heap":
+                        value = logo.blocks.blockList[statusField[0]].value;
                         break;
                     default:
                         value = logo.blocks.blockList[statusField[0]].value;
@@ -316,6 +337,5 @@ class StatusMatrix {
         }
 
         logo.updatingStatusMatrix = false;
-    };
-
+    }
 }

@@ -1,3 +1,11 @@
+<a href="https://github.com//sugarlabs/musicblocks/graphs/contributors" alt="Contributors">
+    <img src="https://img.shields.io/github/contributors/sugarlabs/musicblocks" />
+</a>
+
+<a href="#license" alt="License">
+    <img src="https://img.shields.io/github/license/sugarlabs/musicblocks" />
+</a>
+
 # Music Blocks
 
 “_All musicians are subconsciously mathematicians._” — Monk
@@ -7,24 +15,38 @@ Leibniz
 
 Music Blocks is a _Visual Programming Language_ and collection of _manipulative tools_ for exploring musical and mathematical concepts in an integrative and fun way.
 
-**Refer the following sections below to get familiar with this project:**
+## Getting Started
 
-- [Running Music Blocks](#RUNNING_MUSIC_BLOCKS)
-- [How to set up a local server](#HOW_TO_SET_UP_A_LOCAL_SERVER)
-- [Using Music Blocks](#USING_MUSIC_BLOCKS)
-- [Modifying Music Blocks](#MODIFYING_MUSIC_BLOCKS)
-- [Reporting Bugs](#REPORTING_BUGS)
-- [Contributing](#CONTRIBUTING)
-- [Credits](#CREDITS)
-- [Music Blocks in Japan](#MUSIC_BLOCKS_IN_JAPAN)
-
-## Screenshots
+Music Blocks is an interactive Web Application &mdash; the interaction is done via basic mouse
+events like _click_, _right click_, _click and drag_, etc. and keyboard events like _hotkey press_.
+The application is audio-visual; it produces graphics artwork and music. Here are a couple of
+screenshots to give you an idea of how the application looks like:
 
 ![alt tag](./screenshots/Screenshot-1.png)
 
 ![alt tag](./screenshots/Screenshot-2.png)
 
 Some background on why music and programming can be found [here](./WhyMusicBlocks.md).
+
+**Refer to the following sections to get familiar with this application:**
+
+- [Running Music Blocks](#RUNNING_MUSIC_BLOCKS)
+- [How to set up a local server](#HOW_TO_SET_UP_A_LOCAL_SERVER)
+- [Using Music Blocks](#USING_MUSIC_BLOCKS)
+
+If you are a developer (beginner, experienced, or pro), you are very welcome to participate in the
+evolution of Music Blocks.
+
+**Refer to the following sections to get an idea:**
+
+- [Contributing](#CONTRIBUTING)
+- [Modifying Music Blocks](#MODIFYING_MUSIC_BLOCKS)
+- [Reporting Bugs](#REPORTING_BUGS)
+
+**Refer to the following for more information regarding the evolution of this project:**
+
+- [Credits](#CREDITS)
+- [Music Blocks in Japan](#MUSIC_BLOCKS_IN_JAPAN)
 
 ## <a name="RUNNING_MUSIC_BLOCKS"></a>Running Music Blocks
 
@@ -35,6 +57,9 @@ Music Blocks is designed to run in a web browser. The ideal way to run Music Blo
 URL [_musicblocks.sugarlabs.org_](https://musicblocks.sugarlabs.org) in your browser —
 _Google Chrome_ (or _Chromium_), _Microsoft Edge_ (_Chromium-based_), _Mozilla Firefox_, and
 _Opera_ work best.
+
+To run from the latest master branch (experimental), visit
+[_sugarlabs.github.io/musicblocks_](https://sugarlabs.github.io/musicblocks).
 
 ## <a name="HOW_TO_SET_UP_A_LOCAL_SERVER"></a>How to set up a _local server_
 
@@ -94,37 +119,10 @@ Once Music Blocks is running, you'll want suggestions on how to use it. Follow
 Looking for a block? Find it in the
 [Palette Tables](./guide/README.md#APPENDIX_1).
 
-## <a name="MODIFYING_MUSIC_BLOCKS"></a>Modifying Music Blocks
-
-The core funnctionality for Music Blocks resides in the [`js/` directory](./js/). Individual
-modules are described in more detail in [js/README.md](./js/README.md).
-
-**NOTE:** As for any changes, please make your own copy by cloning this
-[repository](https://github.com/sugarlabs/musicblocks.git). Make your changes, test them, and then
-make a pull request.
-
-See [Contributing Code](https://github.com/sugarlabs/sugar-docs/blob/master/src/contributing.md)
-to get a general idea about this organizations guidelines. See [Contributing](#CONTRIBUTING)
-section for specific details about this repository.
-
-## <a name="REPORTING_BUGS"></a>Reporting Bugs
-
-Bugs can be reported in the [issues tab](https://github.com/sugarlabs/musicblocks/issues) of this
-repository.
-
-If possible, please include the browser _console log output_, and _steps to reproduce_, when
-reporting bugs. To access the console, type `Ctrl-Shift-J`/`F12` on most browsers. Alternately,
-_right click_ and select `Inspect`. You may need to set the `Default levels` for the console to
-`Verbose` in order to see all of the output, however, in most cases that won't be required. In fact,
-it'll only clutter the list, so select it only when required.
-
 ## <a name="CONTRIBUTING"></a>Contributing
 
 Please consider contributing to the project, with your ideas, your music, your lesson plans, your
 artwork, and your code.
-
-Programmers, please follow these general
-[guidelines for contributions](https://github.com/sugarlabs/sugar-docs/blob/master/src/contributing.md).
 
 ### Special Notes
 
@@ -132,7 +130,7 @@ Music Blocks is being built from the ground-up, to address several architectural
 run. Since Music Blocks is a fork of Turtle Blocks JS, musical functionality was added on top of it.
 However, music is fundamental to Music Blocks. Besides, the Turtle Blocks JS started initially with
 handful of features, and was written without a complex architecture. As Music Blocks got built on
-top of that, it got incremently complex, but the architecture remained simple, thus resulting in a
+top of that, it got incrementally complex, but the architecture remained simple, thus resulting in a
 monolith. Also, the functionality is tightly coupled with the interface and native client API (Web
 API).
 
@@ -140,6 +138,26 @@ Keeping these problems in mind, we have considered a foundational rebuild that w
 these issues, whilst adding buffers for future additions. We'll also be using a more elegant
 tech-stack to develop and maintain this project given its scale. After the core is built, we'll be
 porting features from this application to it.
+
+Refer to the repository [**sugarlabs/musicblocks-2**](https://github.com/sugarlabs/musicblocks-2)
+for more information about the new project &mdash; _Music Blocks 2.0_.
+
+### Tech Stack
+
+Music Blocks is a Web Application and is written using browser technologies &mdash; `HTML`, `CSS`
+(`SCSS`), `JavaScript`, `SVG`, etc.
+
+If you're just getting started with development, you may refer to the following resources:
+
+- [HTML tutorial - w3schools.com](https://www.w3schools.com/html/default.asp)
+- [HTML reference - MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/HTML)
+- [CSS tutorial - w3schools.com](https://www.w3schools.com/css/default.asp)
+- [CSS reference - MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/CSS)
+- [JavaScript tutorial - w3schools.com](https://www.w3schools.com/js/default.asp)
+- [JavaScript reference - MDN Web Docs](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
+
+Programmers, please follow these general
+[guidelines for contributions](https://github.com/sugarlabs/sugar-docs/blob/master/src/contributing.md).
 
 ### New Contributors
 
@@ -197,6 +215,30 @@ requests linked to an issue you are addressing; if there are none, then assume n
 anything. Begin to fix the problem, test, make your commits, push your commits, then make a pull
 request. Mention an issue number in the pull request, but not the commit message. These practices
 allow the competition of ideas (Sugar Labs is a meritocracy)._
+
+## <a name="MODIFYING_MUSIC_BLOCKS"></a>Modifying Music Blocks
+
+The core functionality for Music Blocks resides in the [`js/` directory](./js/). Individual
+modules are described in more detail in [js/README.md](./js/README.md).
+
+**NOTE:** As for any changes, please make your own copy by cloning this
+[repository](https://github.com/sugarlabs/musicblocks.git). Make your changes, test them, and then
+make a pull request.
+
+See [Contributing Code](https://github.com/sugarlabs/sugar-docs/blob/master/src/contributing.md)
+to get a general idea about this organizations guidelines. See [Contributing](#CONTRIBUTING)
+section for specific details about this repository.
+
+## <a name="REPORTING_BUGS"></a>Reporting Bugs
+
+Bugs can be reported in the [issues tab](https://github.com/sugarlabs/musicblocks/issues) of this
+repository.
+
+If possible, please include the browser _console log output_, and _steps to reproduce_, when
+reporting bugs. To access the console, type `Ctrl-Shift-J`/`F12` on most browsers. Alternately,
+_right click_ and select `Inspect`. You may need to set the `Default levels` for the console to
+`Verbose` in order to see all of the output, however, in most cases that won't be required. In fact,
+it'll only clutter the list, so select it only when required.
 
 ## <a name="CREDITS"></a>Credits
 
